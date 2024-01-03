@@ -3,6 +3,7 @@ use crate::opcodes::*;
 
 pub type Value = f64;
 
+#[derive(Debug)]
 pub struct Chunk {
     code: Vec<u8>,
     lines: Vec<(usize, usize)>, // (line, run_length)
@@ -77,8 +78,12 @@ impl Chunk {
         match instruction {
             OpCode::OpConstant => self.constant_instruction("OP_CONSTANT", offset),
             OpCode::OpConstantLong => self.constant_long_instruction("OP_CONSTANT_LONG", offset),
-            OpCode::OpNegate => self.simple_instruction("OP_NEGATE", offset),
             OpCode::OpReturn => self.simple_instruction("OP_RETURN", offset),
+            OpCode::OpNegate => self.simple_instruction("OP_NEGATE", offset),
+            OpCode::OpAdd => self.simple_instruction("OP_ADD", offset),
+            OpCode::OpSubtract => self.simple_instruction("OP_SUBTRACT", offset),
+            OpCode::OpMultiply => self.simple_instruction("OP_MULTIPLY", offset),
+            OpCode::OpDivide => self.simple_instruction("OP_DIVIDE", offset),
         }
     }
 

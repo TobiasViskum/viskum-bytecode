@@ -6,7 +6,9 @@ pub enum InterpretResult {
     Ok,
     CompileError,
     RuntimeError,
+    Debug(Value),
 }
+
 pub struct VM<'a> {
     chunk: Option<&'a mut Chunk>,
     ip: usize,
@@ -17,6 +19,10 @@ pub struct VM<'a> {
 impl<'a> VM<'a> {
     pub fn new() -> Self {
         Self { chunk: None, ip: 0, stack: Vec::with_capacity(256) }
+    }
+
+    pub fn get_stack(&self) -> &Vec<Value> {
+        &self.stack
     }
 
     pub fn reset_stack(&mut self) {
@@ -52,23 +58,36 @@ impl<'a> VM<'a> {
             let instruction = self.read_byte().into();
             match instruction {
                 OpCode::OpReturn => {
+                    #[cfg(test)]
+                    {
+                        return InterpretResult::Debug(self.stack.pop().unwrap());
+                    }
+
                     #[cfg(feature = "debug_trace_execution")]
                     {
                         println!("{}", self.stack.pop().unwrap());
                     }
-                    return InterpretResult::Ok;
+
+                    #[allow(unreachable_code)]
+                    {
+                        return InterpretResult::Ok;
+                    }
                 }
                 OpCode::OpConstant => {
                     let constant = self.read_constant();
+                    self.stack.push(constant);
+                }
+
+                OpCode::OpConstantLong => {
+                    let constant = self.read_long_constant();
                     self.stack.push(constant);
                 }
                 OpCode::OpNegate => {
                     let value = self.stack.pop().unwrap();
                     self.stack.push(-value);
                 }
-                OpCode::OpConstantLong => {
-                    let constant = self.read_long_constant();
-                    self.stack.push(constant);
+                OpCode::OpAdd | OpCode::OpSubtract | OpCode::OpMultiply | OpCode::OpDivide => {
+                    self.binary_op(instruction);
                 }
             }
         }
@@ -110,5 +129,17 @@ impl<'a> VM<'a> {
         } else {
             0.0
         }
+    }
+
+    fn binary_op(&mut self, op: OpCode) {
+        let b = self.stack.pop().unwrap();
+        let a = self.stack.pop().unwrap();
+        self.stack.push(match op {
+            OpCode::OpAdd => a + b,
+            OpCode::OpSubtract => a - b,
+            OpCode::OpMultiply => a * b,
+            OpCode::OpDivide => a / b,
+            _ => panic!("Unknown binary op: {}", op.to_string()),
+        });
     }
 }
