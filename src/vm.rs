@@ -1,4 +1,5 @@
-use crate::chunk::{ Chunk, OpCode::{ self, * }, Value };
+use crate::chunk::{ Chunk, Value };
+use crate::opcodes::OpCode;
 
 #[derive(Debug, PartialEq)]
 pub enum InterpretResult {
@@ -9,14 +10,23 @@ pub enum InterpretResult {
 pub struct VM<'a> {
     chunk: Option<&'a mut Chunk>,
     ip: usize,
+    stack: Vec<Value>,
+    // stack_top: Value,
 }
 
 impl<'a> VM<'a> {
     pub fn new() -> Self {
-        Self { chunk: None, ip: 0 }
+        Self { chunk: None, ip: 0, stack: Vec::with_capacity(256) }
     }
 
-    pub fn free(&self) {}
+    pub fn reset_stack(&mut self) {
+        self.stack.clear();
+    }
+
+    pub fn free(&mut self) {
+        self.chunk = None;
+        self.ip = 0;
+    }
 
     pub fn interpret(&mut self, chunk: &'a mut Chunk) -> InterpretResult {
         self.chunk = Some(chunk);
@@ -26,18 +36,39 @@ impl<'a> VM<'a> {
 
     fn run(&mut self) -> InterpretResult {
         loop {
+            #[cfg(feature = "debug_trace_execution")]
+            {
+                print!("          ");
+                for slot in &self.stack {
+                    print!("[ {} ]", slot);
+                }
+                println!();
+
+                if self.chunk.is_some() {
+                    self.chunk.as_ref().unwrap().disassemble_instruction(self.ip);
+                }
+            }
+
             let instruction = self.read_byte().into();
             match instruction {
-                OpReturn => {
+                OpCode::OpReturn => {
+                    #[cfg(feature = "debug_trace_execution")]
+                    {
+                        println!("{}", self.stack.pop().unwrap());
+                    }
                     return InterpretResult::Ok;
                 }
-                OpConstant => {
+                OpCode::OpConstant => {
                     let constant = self.read_constant();
-                    println!("{}", constant);
+                    self.stack.push(constant);
                 }
-                OpConstantLong => {
+                OpCode::OpNegate => {
+                    let value = self.stack.pop().unwrap();
+                    self.stack.push(-value);
+                }
+                OpCode::OpConstantLong => {
                     let constant = self.read_long_constant();
-                    println!("{}", constant);
+                    self.stack.push(constant);
                 }
             }
         }

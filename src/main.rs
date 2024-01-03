@@ -1,7 +1,9 @@
 mod chunk;
 mod value;
 mod vm;
+mod opcodes;
 
+use opcodes::OpCode;
 use vm::VM;
 
 use crate::chunk::*;
@@ -13,9 +15,9 @@ fn main() {
 
     chunk.write_constant(123344.3, 123);
 
-    chunk.write_byte(OpCode::OpReturn.into(), 123);
+    chunk.write_byte(OpCode::OpNegate.into(), 123);
 
-    chunk.disassemble("test chunk");
+    chunk.write_byte(OpCode::OpReturn.into(), 123);
 
     vm.interpret(&mut chunk);
     vm.free();
@@ -29,7 +31,7 @@ mod tests {
 
     #[test]
     fn test_op_constant() {
-        let vm = VM::new();
+        let mut vm = VM::new();
         let mut chunk = Chunk::new();
 
         let constant = 123.456;
@@ -44,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_op_constant_long() {
-        let vm = VM::new();
+        let mut vm = VM::new();
         let mut chunk = Chunk::new();
 
         // Add enough constants to require OpConstantLong.

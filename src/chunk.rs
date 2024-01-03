@@ -1,4 +1,6 @@
 use crate::value::*;
+use crate::opcodes::*;
+
 pub type Value = f64;
 
 pub struct Chunk {
@@ -62,7 +64,7 @@ impl Chunk {
         }
     }
 
-    fn disassemble_instruction(&self, offset: usize) -> usize {
+    pub fn disassemble_instruction(&self, offset: usize) -> usize {
         print!("{:04} ", offset);
 
         if offset > 0 && self.get_line(offset) == self.get_line(offset - 1) {
@@ -75,6 +77,7 @@ impl Chunk {
         match instruction {
             OpCode::OpConstant => self.constant_instruction("OP_CONSTANT", offset),
             OpCode::OpConstantLong => self.constant_long_instruction("OP_CONSTANT_LONG", offset),
+            OpCode::OpNegate => self.simple_instruction("OP_NEGATE", offset),
             OpCode::OpReturn => self.simple_instruction("OP_RETURN", offset),
         }
     }
@@ -116,10 +119,12 @@ impl Chunk {
     }
 }
 
+/* 
 pub enum OpCode {
     OpReturn = 0,
     OpConstant = 1,
     OpConstantLong = 2,
+    OpNegate = 3,
 }
 
 impl From<u8> for OpCode {
@@ -138,38 +143,4 @@ impl From<OpCode> for u8 {
         opcode as u8
     }
 }
-
-/* TODO: Implement this
-    fn is_same_line(&self, offset: usize) -> bool {
-        if offset > 0 && self.get_line(offset) == self.get_line(offset - 1) {
-            return true;
-        }
-
-        false
-    }
-
-    fn get_line(&self, offset: usize) -> usize {
-        let mut line = 0;
-        let mut start = 0;
-        let mut end = 0;
-
-        for (i, byte) in self.code.iter().enumerate() {
-            if i == offset {
-                return line;
-            }
-
-            if *byte == b'\n' {
-                line += 1;
-                start = i + 1;
-            }
-
-            end = i;
-        }
-
-        if offset >= start && offset <= end {
-            return line;
-        }
-
-        0
-    }
-    */
+*/
