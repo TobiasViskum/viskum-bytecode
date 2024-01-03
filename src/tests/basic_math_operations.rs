@@ -10,11 +10,12 @@ mod test {
         chunk.write_constant(123.0, 1);
         chunk.write_constant(2.0, 1);
         chunk.write_byte(OpCode::OpDivide.into(), 1);
+        chunk.write_byte(OpCode::OpNegate.into(), 1);
         chunk.write_byte(OpCode::OpReturn.into(), 1);
 
         let debug_result = vm.interpret(&mut chunk);
         if let InterpretResult::Debug(value) = debug_result {
-            assert_eq!(value, 61.5);
+            assert_eq!(value, -61.5);
         } else {
             panic!("Expected debug result");
         }
@@ -30,13 +31,15 @@ mod test {
         let mut chunk = Chunk::new();
 
         chunk.write_constant(35.4, 1);
+        chunk.write_byte(OpCode::OpNegate.into(), 1);
         chunk.write_constant(8.6, 1);
         chunk.write_byte(OpCode::OpAdd.into(), 1);
         chunk.write_byte(OpCode::OpReturn.into(), 1);
 
         let debug_result = vm.interpret(&mut chunk);
         if let InterpretResult::Debug(value) = debug_result {
-            assert_eq!(value, 44.0);
+            // Round to one decimal place, to avoid floating point errors.
+            assert_eq!((value * 100.0).round() / 100.0, -26.8);
         } else {
             panic!("Expected debug result");
         }

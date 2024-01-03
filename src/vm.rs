@@ -77,18 +77,19 @@ impl<'a> VM<'a> {
                     let constant = self.read_constant();
                     self.stack.push(constant);
                 }
-
                 OpCode::OpConstantLong => {
                     let constant = self.read_long_constant();
                     self.stack.push(constant);
                 }
                 OpCode::OpNegate => {
-                    let value = self.stack.pop().unwrap();
-                    self.stack.push(-value);
+                    if let Some(last) = self.stack.last_mut() {
+                        *last *= -1.0;
+                    }
                 }
-                OpCode::OpAdd | OpCode::OpSubtract | OpCode::OpMultiply | OpCode::OpDivide => {
-                    self.binary_op(instruction);
-                }
+                OpCode::OpAdd => self.binary_op(|a, b| a + b),
+                OpCode::OpSubtract => self.binary_op(|a, b| a - b),
+                OpCode::OpMultiply => self.binary_op(|a, b| a * b),
+                OpCode::OpDivide => self.binary_op(|a, b| a / b),
             }
         }
     }
@@ -131,15 +132,9 @@ impl<'a> VM<'a> {
         }
     }
 
-    fn binary_op(&mut self, op: OpCode) {
+    fn binary_op(&mut self, op: fn(a: Value, b: Value) -> Value) {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
-        self.stack.push(match op {
-            OpCode::OpAdd => a + b,
-            OpCode::OpSubtract => a - b,
-            OpCode::OpMultiply => a * b,
-            OpCode::OpDivide => a / b,
-            _ => panic!("Unknown binary op: {}", op.to_string()),
-        });
+        self.stack.push(op(a, b));
     }
 }
