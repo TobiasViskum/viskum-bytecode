@@ -1,4 +1,5 @@
 use crate::chunk::{ Chunk, Value };
+use crate::compiler::Compiler;
 use crate::opcodes::OpCode;
 
 #[derive(Debug, PartialEq)]
@@ -9,14 +10,14 @@ pub enum InterpretResult {
     Debug(Value),
 }
 
-pub struct VM<'a> {
-    chunk: Option<&'a mut Chunk>,
+pub struct VM {
+    chunk: Option<Chunk>,
     ip: usize,
     stack: Vec<Value>,
     // stack_top: Value,
 }
 
-impl<'a> VM<'a> {
+impl VM {
     pub fn new() -> Self {
         Self { chunk: None, ip: 0, stack: Vec::with_capacity(256) }
     }
@@ -34,7 +35,36 @@ impl<'a> VM<'a> {
         self.ip = 0;
     }
 
-    pub fn interpret(&mut self, chunk: &'a mut Chunk) -> InterpretResult {
+    pub fn init_chunk(&mut self, chunk: Chunk) {
+        self.chunk = Some(chunk);
+        self.ip = 0;
+    }
+
+    pub fn free_chunk(&mut self) {
+        self.chunk = None;
+    }
+
+    pub fn interpret(&mut self, source: &str) -> InterpretResult {
+        let mut compiler = Compiler::new(source);
+
+        let mut chunk = Chunk::new();
+
+        if !compiler.compile(&mut chunk) {
+            self.free_chunk();
+            return InterpretResult::CompileError;
+        }
+
+        self.init_chunk(chunk);
+
+        let result = self.run();
+
+        self.free_chunk();
+
+        result
+    }
+
+    #[cfg(test)]
+    pub fn interpret_chunk(&mut self, chunk: Chunk) -> InterpretResult {
         self.chunk = Some(chunk);
         self.ip = 0;
         self.run()
@@ -77,6 +107,7 @@ impl<'a> VM<'a> {
                     let constant = self.read_constant();
                     self.stack.push(constant);
                 }
+
                 OpCode::OpConstantLong => {
                     let constant = self.read_long_constant();
                     self.stack.push(constant);
@@ -85,6 +116,10 @@ impl<'a> VM<'a> {
                     if let Some(last) = self.stack.last_mut() {
                         *last *= -1.0;
                     }
+
+                    // This is actually micro-optimization, but it's not worth it. It may use more memory.
+                    // let value = self.stack.pop().unwrap();
+                    // self.stack.push(-value);
                 }
                 OpCode::OpAdd => self.binary_op(|a, b| a + b),
                 OpCode::OpSubtract => self.binary_op(|a, b| a - b),

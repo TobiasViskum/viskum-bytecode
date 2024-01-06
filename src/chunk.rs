@@ -123,29 +123,3 @@ impl Chunk {
         0
     }
 }
-
-/* 
-pub enum OpCode {
-    OpReturn = 0,
-    OpConstant = 1,
-    OpConstantLong = 2,
-    OpNegate = 3,
-}
-
-impl From<u8> for OpCode {
-    fn from(byte: u8) -> Self {
-        match byte {
-            0 => OpCode::OpReturn,
-            1 => OpCode::OpConstant,
-            2 => OpCode::OpConstantLong,
-            _ => unimplemented!("Unknown opcode: {}", byte),
-        }
-    }
-}
-
-impl From<OpCode> for u8 {
-    fn from(opcode: OpCode) -> Self {
-        opcode as u8
-    }
-}
-*/
