@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use crate::*;
+    use crate::{ *, opcodes::OpCode, chunk::Chunk };
 
     #[test]
     fn test_op_constant() {
@@ -13,7 +13,7 @@ mod test {
 
         assert_eq!(chunk.read_constant(0), constant);
 
-        vm.free();
+        vm.free_chunk();
         chunk.free();
     }
 

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use crate::{ *, vm::InterpretResult };
+    use crate::{ *, vm::InterpretResult, chunk::Chunk, opcodes::OpCode };
 
     #[test]
     fn test_op_divide() {
@@ -13,7 +13,7 @@ mod test {
         chunk.write_byte(OpCode::OpNegate.into(), 1);
         chunk.write_byte(OpCode::OpReturn.into(), 1);
 
-        let debug_result = vm.interpret(&mut chunk);
+        let debug_result = vm.interpret_chunk(chunk);
         if let InterpretResult::Debug(value) = debug_result {
             assert_eq!(value, -61.5);
         } else {
@@ -21,7 +21,6 @@ mod test {
         }
 
         vm.free();
-        chunk.free();
     }
 
     // Write similar tests for the other three opcodes.
@@ -36,7 +35,7 @@ mod test {
         chunk.write_byte(OpCode::OpAdd.into(), 1);
         chunk.write_byte(OpCode::OpReturn.into(), 1);
 
-        let debug_result = vm.interpret(&mut chunk);
+        let debug_result = vm.interpret_chunk(chunk);
         if let InterpretResult::Debug(value) = debug_result {
             // Round to one decimal place, to avoid floating point errors.
             assert_eq!((value * 100.0).round() / 100.0, -26.8);
@@ -45,7 +44,6 @@ mod test {
         }
 
         vm.free();
-        chunk.free();
     }
 
     #[test]
@@ -58,7 +56,7 @@ mod test {
         chunk.write_byte(OpCode::OpSubtract.into(), 1);
         chunk.write_byte(OpCode::OpReturn.into(), 1);
 
-        let debug_result = vm.interpret(&mut chunk);
+        let debug_result = vm.interpret_chunk(chunk);
         if let InterpretResult::Debug(value) = debug_result {
             assert_eq!(value, 50.0);
         } else {
@@ -66,7 +64,6 @@ mod test {
         }
 
         vm.free();
-        chunk.free();
     }
 
     #[test]
@@ -79,7 +76,7 @@ mod test {
         chunk.write_byte(OpCode::OpMultiply.into(), 1);
         chunk.write_byte(OpCode::OpReturn.into(), 1);
 
-        let debug_result = vm.interpret(&mut chunk);
+        let debug_result = vm.interpret_chunk(chunk);
         if let InterpretResult::Debug(value) = debug_result {
             assert_eq!(value, 12300.0);
         } else {
@@ -87,6 +84,5 @@ mod test {
         }
 
         vm.free();
-        chunk.free();
     }
 }
