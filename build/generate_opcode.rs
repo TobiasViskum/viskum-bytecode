@@ -66,22 +66,3 @@ pub fn generate_opcode(opcodes: &[&str]) -> io::Result<()> {
 
     Ok(())
 }
-
-/*
-
-impl OpCode {
-    pub fn to_string(&self) -> String {
-        match self {
-            OpCode::OpReturn => "return".to_string(),
-            OpCode::OpConstant => "constant".to_string(),
-            OpCode::OpConstantLong => "constantlong".to_string(),
-            OpCode::OpNegate => "negate".to_string(),
-            OpCode::OpAdd => "add".to_string(),
-            OpCode::OpSubtract => "subract".to_string(),
-            OpCode::OpMultiply => "multiply".to_string(),
-            OpCode::OpDivide => "divide".to_string(),
-        }
-    }
-}
-
-*/
