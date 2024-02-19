@@ -9,6 +9,7 @@ build = "build/build.rs"
 [dependencies]
 colorize = "0.1.0"
 statrs = "0.16.0"
+lazy_static = "1.4.0"
 
 [features]
 debug_trace_execution = []

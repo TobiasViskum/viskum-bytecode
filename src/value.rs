@@ -7,7 +7,7 @@ pub struct ValueArray {
 
 impl ValueArray {
     pub fn new() -> Self {
-        Self { values: Vec::new() }
+        Self { values: Vec::with_capacity(256) }
     }
 
     pub fn write(&mut self, value: Value) -> usize {
@@ -20,6 +20,7 @@ impl ValueArray {
         self.values.clear();
     }
 
+    #[cfg(feature = "debug_trace_execution")]
     pub fn print_value(&self, constant: u8) {
         print!("{}", self.values[constant as usize])
     }

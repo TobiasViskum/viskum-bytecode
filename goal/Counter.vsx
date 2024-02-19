@@ -1,0 +1,13 @@
+pub state<int> count := state(0)
+
+pub fn Counter() {
+    float sum := 2 + 3 + 4
+
+    return (
+        <div>
+            <p>The sum of 2 + 3 + 4 is {sum}</p>
+            <p>Count: {count}</p>
+            <button onclick={fn() { count++ }}>Increment</button>
+        </div>
+    )
+}

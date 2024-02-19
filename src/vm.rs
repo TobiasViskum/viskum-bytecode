@@ -1,6 +1,7 @@
 use crate::chunk::{ Chunk, Value };
 use crate::compiler::Compiler;
 use crate::opcodes::OpCode;
+use std::time::{ SystemTime, UNIX_EPOCH };
 
 #[derive(Debug, PartialEq)]
 pub enum InterpretResult {
@@ -10,6 +11,7 @@ pub enum InterpretResult {
     Debug(Value),
 }
 
+#[derive(Debug)]
 pub struct VM {
     chunk: Option<Chunk>,
     ip: usize,
@@ -45,11 +47,17 @@ impl VM {
     }
 
     pub fn interpret(&mut self, source: &str) -> InterpretResult {
-        let mut compiler = Compiler::new(source);
+        let secs_start = std::time::SystemTime
+            ::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64();
 
         let mut chunk = Chunk::new();
 
-        if !compiler.compile(&mut chunk) {
+        let mut compiler = Compiler::new(source, &mut chunk);
+
+        if compiler.compile() {
             self.free_chunk();
             return InterpretResult::CompileError;
         }
@@ -59,6 +67,19 @@ impl VM {
         let result = self.run();
 
         self.free_chunk();
+
+        let secs_end = std::time::SystemTime
+            ::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64();
+
+        let elapsed = (secs_end - secs_start) * 1000.0;
+
+        #[cfg(feature = "debug_trace_execution")]
+        {
+            println!("Elapsed time: {}ms", elapsed);
+        }
 
         result
     }
@@ -71,6 +92,7 @@ impl VM {
     }
 
     fn run(&mut self) -> InterpretResult {
+        println!("Running chunk: {:?}", self.chunk);
         loop {
             #[cfg(feature = "debug_trace_execution")]
             {
@@ -86,6 +108,7 @@ impl VM {
             }
 
             let instruction = self.read_byte().into();
+
             match instruction {
                 OpCode::OpReturn => {
                     #[cfg(test)]
@@ -133,7 +156,7 @@ impl VM {
         self.ip += 1;
         let ip = self.ip;
         if let Some(chunk) = &self.chunk {
-            chunk.get_code()[ip - 1] as u8
+            if let Some(code) = chunk.get_code().get(ip - 1) { *code } else { 0 }
         } else {
             0
         }

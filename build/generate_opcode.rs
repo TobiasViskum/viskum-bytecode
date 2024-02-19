@@ -5,6 +5,7 @@ pub fn generate_opcode(opcodes: &[&str]) -> io::Result<()> {
 
     let mut file = File::create(out_dir)?;
 
+    writeln!(file, "#[derive(Debug)]")?;
     writeln!(file, "pub enum OpCode {{")?;
     for opcode in opcodes {
         let split = opcode.split(" = ").collect::<Vec<&str>>();

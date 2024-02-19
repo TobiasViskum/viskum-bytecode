@@ -2,6 +2,7 @@ use self::token_type::TokenType;
 
 pub mod token_type;
 
+#[derive(Debug)]
 pub struct Token {
     token_type: TokenType,
     start: usize,
@@ -32,5 +33,9 @@ impl Token {
 
     pub fn get_token_type(&self) -> &TokenType {
         &self.token_type
+    }
+
+    pub fn get_lexeme(&self, source: &str) -> String {
+        source[self.start..self.start + self.length].to_string()
     }
 }

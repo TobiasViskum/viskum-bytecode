@@ -22,3 +22,4 @@ Cargo.lock
 # Automatically generated files
 src/opcodes.rs
 src/token/token_type.rs
+src/parse_rule/rules_store.rs

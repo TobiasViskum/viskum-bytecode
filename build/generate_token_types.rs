@@ -5,7 +5,7 @@ pub fn generate_token_types(tokentypes: &[&str]) -> io::Result<()> {
 
     let mut file = File::create(out_dir)?;
 
-    writeln!(file, "#[derive(PartialEq)]")?;
+    writeln!(file, "#[derive(PartialEq, Debug, Clone, Eq, Hash)]")?;
 
     writeln!(file, "pub enum TokenType {{")?;
     for (_, tokentype) in tokentypes.iter().enumerate() {

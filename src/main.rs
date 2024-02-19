@@ -7,6 +7,9 @@ mod token;
 mod util;
 mod lexer;
 mod compiler;
+mod parser;
+mod precedence;
+mod parse_rule;
 
 use std::{ process, io::{ self, stdout, Write, BufRead } };
 

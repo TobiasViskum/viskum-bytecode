@@ -1,24 +1,43 @@
 mod helper_methods;
 
-use crate::{ lexer::Lexer, token::token_type::TokenType, chunk::Chunk };
+use crate::{ lexer::Lexer, token::token_type::TokenType, chunk::Chunk, parser::Parser };
 
 pub struct Compiler<'a> {
-    lexer: Lexer<'a>,
+    parser: Parser<'a>,
+    source: &'a str,
+    compiling_chunk: &'a mut Chunk,
 }
 
 impl<'a> Compiler<'a> {
-    pub fn new(source: &'a str) -> Self {
-        let mut lexer = Lexer::new(source);
+    pub fn new(source: &'a str, chunk: &'a mut Chunk) -> Self {
+        let parser = Parser::new(source);
 
-        Self { lexer: lexer }
+        Self { parser: parser, source: source, compiling_chunk: chunk }
     }
 
-    pub fn compile(&mut self, chunk: &mut Chunk) -> bool {
-        // self.advance();
-        // self.expression();
-        // self.consume(TokenType::TokenEof, "Expected end of expression");
+    pub fn compile(&mut self) -> bool {
+        // self.parser.advance();
+        self.expression();
 
-        true
+        self.parser.consume(TokenType::TokenEof, "Expected end of expression");
+        self.end_compiler();
+
+        println!("Compilation finished");
+        println!("Had error: {}", self.parser.get_had_error());
+        self.parser.get_had_error()
+    }
+
+    pub fn emit_byte(&mut self, byte: u8) {
+        let previous = self.parser.get_previous();
+        if previous.is_some() {
+            let line = previous.as_ref().unwrap().get_line();
+
+            self.write_chunk(byte, line);
+        }
+    }
+
+    fn write_chunk(&mut self, byte: u8, line: usize) {
+        self.compiling_chunk.write_byte(byte, line);
     }
 
     pub fn compile_old(&mut self, source: &str) {
