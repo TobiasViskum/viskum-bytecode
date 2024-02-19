@@ -1,6 +1,7 @@
 use crate::chunk::{ Chunk, Value };
 use crate::compiler::Compiler;
 use crate::opcodes::OpCode;
+#[cfg(feature = "debug_trace_execution")]
 use std::time::{ SystemTime, UNIX_EPOCH };
 
 #[derive(Debug, PartialEq)]
@@ -47,6 +48,7 @@ impl VM {
     }
 
     pub fn interpret(&mut self, source: &str) -> InterpretResult {
+        #[cfg(feature = "debug_trace_execution")]
         let secs_start = std::time::SystemTime
             ::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -68,16 +70,14 @@ impl VM {
 
         self.free_chunk();
 
-        let secs_end = std::time::SystemTime
-            ::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs_f64();
-
-        let elapsed = (secs_end - secs_start) * 1000.0;
-
         #[cfg(feature = "debug_trace_execution")]
         {
+            let secs_end = std::time::SystemTime
+                ::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs_f64();
+            let elapsed = (secs_end - secs_start) * 1000.0;
             println!("Elapsed time: {}ms", elapsed);
         }
 
@@ -92,7 +92,6 @@ impl VM {
     }
 
     fn run(&mut self) -> InterpretResult {
-        println!("Running chunk: {:?}", self.chunk);
         loop {
             #[cfg(feature = "debug_trace_execution")]
             {
@@ -117,9 +116,7 @@ impl VM {
                     }
 
                     #[cfg(feature = "debug_trace_execution")]
-                    {
-                        println!("{}", self.stack.pop().unwrap());
-                    }
+                    println!("{}", self.stack.pop().unwrap());
 
                     #[allow(unreachable_code)]
                     {
@@ -148,6 +145,7 @@ impl VM {
                 OpCode::OpSubtract => self.binary_op(|a, b| a - b),
                 OpCode::OpMultiply => self.binary_op(|a, b| a * b),
                 OpCode::OpDivide => self.binary_op(|a, b| a / b),
+                OpCode::OpPower => self.binary_op(|a, b| a.powf(b)),
             }
         }
     }

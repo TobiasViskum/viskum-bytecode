@@ -1,88 +1,122 @@
 #[cfg(test)]
 mod test {
-    use crate::{ *, vm::InterpretResult, chunk::Chunk, opcodes::OpCode };
+    use crate::*;
 
     #[test]
     fn test_op_divide() {
         let mut vm = VM::new();
-        let mut chunk = Chunk::new();
 
-        chunk.write_constant(123.0, 1);
-        chunk.write_constant(2.0, 1);
-        chunk.write_byte(OpCode::OpDivide.into(), 1);
-        chunk.write_byte(OpCode::OpNegate.into(), 1);
-        chunk.write_byte(OpCode::OpReturn.into(), 1);
+        let result = vm.interpret("8 / 3");
+        assert_eq!(result, InterpretResult::Debug(8.0 / 3.0));
+        vm.free();
 
-        let debug_result = vm.interpret_chunk(chunk);
-        if let InterpretResult::Debug(value) = debug_result {
-            assert_eq!(value, -61.5);
-        } else {
-            panic!("Expected debug result");
-        }
-
+        let result = vm.interpret("8 / 2");
+        assert_eq!(result, InterpretResult::Debug(4.0));
         vm.free();
     }
 
-    // Write similar tests for the other three opcodes.
     #[test]
     fn test_op_add() {
         let mut vm = VM::new();
-        let mut chunk = Chunk::new();
 
-        chunk.write_constant(35.4, 1);
-        chunk.write_byte(OpCode::OpNegate.into(), 1);
-        chunk.write_constant(8.6, 1);
-        chunk.write_byte(OpCode::OpAdd.into(), 1);
-        chunk.write_byte(OpCode::OpReturn.into(), 1);
+        let result = vm.interpret("3 + 3 + 1");
+        assert_eq!(result, InterpretResult::Debug(7.0));
+        vm.free();
 
-        let debug_result = vm.interpret_chunk(chunk);
-        if let InterpretResult::Debug(value) = debug_result {
-            // Round to one decimal place, to avoid floating point errors.
-            assert_eq!((value * 100.0).round() / 100.0, -26.8);
-        } else {
-            panic!("Expected debug result");
-        }
-
+        let result = vm.interpret("1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9");
+        assert_eq!(result, InterpretResult::Debug(45.0));
         vm.free();
     }
 
     #[test]
     fn test_op_subtract() {
         let mut vm = VM::new();
-        let mut chunk = Chunk::new();
 
-        chunk.write_constant(123.0, 1);
-        chunk.write_constant(73.0, 1);
-        chunk.write_byte(OpCode::OpSubtract.into(), 1);
-        chunk.write_byte(OpCode::OpReturn.into(), 1);
+        let result = vm.interpret("7 - 3 - 1");
+        assert_eq!(result, InterpretResult::Debug(3.0));
+        vm.free();
 
-        let debug_result = vm.interpret_chunk(chunk);
-        if let InterpretResult::Debug(value) = debug_result {
-            assert_eq!(value, 50.0);
-        } else {
-            panic!("Expected debug result");
-        }
-
+        let result = vm.interpret("1 - 9");
+        assert_eq!(result, InterpretResult::Debug(-8.0));
         vm.free();
     }
 
     #[test]
     fn test_op_multiply() {
         let mut vm = VM::new();
-        let mut chunk = Chunk::new();
 
-        chunk.write_constant(123.0, 1);
-        chunk.write_constant(100.0, 1);
-        chunk.write_byte(OpCode::OpMultiply.into(), 1);
-        chunk.write_byte(OpCode::OpReturn.into(), 1);
-
-        let debug_result = vm.interpret_chunk(chunk);
-        if let InterpretResult::Debug(value) = debug_result {
-            assert_eq!(value, 12300.0);
-        } else {
-            panic!("Expected debug result");
-        }
-
+        let result = vm.interpret("8 * 8");
+        assert_eq!(result, InterpretResult::Debug(64.0));
         vm.free();
+
+        let result = vm.interpret("2 * 1 * 2");
+        assert_eq!(result, InterpretResult::Debug(4.0));
+        vm.free();
+    }
+
+    #[test]
+    fn test_op_power() {
+        let mut vm = VM::new();
+
+        let result = vm.interpret("2 ^ 3");
+        assert_eq!(result, InterpretResult::Debug(8.0));
+        vm.free();
+
+        let result = vm.interpret("2 ^ 4");
+        assert_eq!(result, InterpretResult::Debug(16.0));
+        vm.free();
+    }
+
+    #[test]
+    fn test_parentheses() {
+        let mut vm = VM::new();
+
+        let result = vm.interpret("8 * (7 + 1)");
+        assert_eq!(result, InterpretResult::Debug(64.0));
+        vm.free();
+
+        let result = vm.interpret("8 * 7 + 1");
+        assert_eq!(result, InterpretResult::Debug(57.0));
+        vm.free();
+
+        let result = vm.interpret("8 - (2 - 4)");
+        assert_eq!(result, InterpretResult::Debug(10.0));
+        vm.free();
+
+        let result = vm.interpret("8 * (7 + 1) / 2");
+        assert_eq!(result, InterpretResult::Debug(32.0));
+        vm.free();
+
+        let result = vm.interpret("8 * (7 + 1) / 2 - 1");
+        assert_eq!(result, InterpretResult::Debug(31.0));
+        vm.free();
+
+        let result = vm.interpret("8 * (7 + 1) / 2 - 1 * 2");
+        assert_eq!(result, InterpretResult::Debug(30.0));
+        vm.free();
+
+        let result = vm.interpret("((8 + 2) * 3) / 2");
+        assert_eq!(result, InterpretResult::Debug(15.0));
+        vm.free();
+
+        let result = vm.interpret("2 * (3 + 2 - 1)");
+        assert_eq!(result, InterpretResult::Debug(8.0));
+        vm.free();
+
+        let result = vm.interpret("2 * ()");
+        assert!(matches!(result, InterpretResult::CompileError));
+        vm.free();
+
+        let result = vm.interpret("2 * (3 + 2");
+        assert!(matches!(result, InterpretResult::CompileError));
+        vm.free();
+
+        let result = vm.interpret("2 (3 + 2)");
+        assert!(matches!(result, InterpretResult::CompileError));
+        vm.free();
+
+        // let result = vm.interpret("2 / 0");
+        // assert!(matches!(result, InterpretResult::RuntimeError));
+        // vm.free();
     }
 }

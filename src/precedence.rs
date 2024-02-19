@@ -1,6 +1,6 @@
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Precedence {
-    PrecNone,
+    PrecNone = 0,
     PrecAssignment,
     PrecOr,
     PrecAnd,

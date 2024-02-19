@@ -13,11 +13,9 @@ impl<'a> Compiler<'a> {
     pub fn end_compiler(&mut self) {
         self.emit_return();
 
-        #[cfg(feature = "debug_trace_execution")]
-        {
-            if !self.parser.get_had_error() {
-                self.compiling_chunk.disassemble("code");
-            }
+        #[cfg(any(feature = "debug_trace_execution", feature = "debug_print_code"))]
+        if !self.parser.get_had_error() {
+            self.compiling_chunk.disassemble("code");
         }
     }
 
@@ -64,12 +62,10 @@ impl<'a> Compiler<'a> {
     }
 
     pub fn unary(&mut self) {
-        let operator_type: TokenType;
-        {
-            operator_type = self.parser.get_previous().as_ref().unwrap().get_token_type().clone();
-        }
+        let operator_type = {
+            self.parser.get_previous().as_ref().unwrap().get_token_type().clone()
+        };
 
-        // This errors if I'm not keeping the ref above in its own scope, because it requires a mutable reference to self, but it's already borrowed as immutable
         self.expression();
 
         self.parse_precedence(PrecUnary);
@@ -81,10 +77,10 @@ impl<'a> Compiler<'a> {
     }
 
     pub fn binary(&mut self) {
-        let operator_type: TokenType;
-        {
-            operator_type = self.parser.get_previous().as_ref().unwrap().get_token_type().clone();
-        }
+        let operator_type = {
+            self.parser.get_previous().as_ref().unwrap().get_token_type().clone()
+        };
+
         let parse_rule = self.get_rule(&operator_type);
 
         self.parse_precedence(parse_rule.get_precedence().get_next());
@@ -94,6 +90,7 @@ impl<'a> Compiler<'a> {
             TokenMinus => self.emit_byte(OpCode::OpSubtract.into()),
             TokenStar => self.emit_byte(OpCode::OpMultiply.into()),
             TokenSlash => self.emit_byte(OpCode::OpDivide.into()),
+            TokenPower => self.emit_byte(OpCode::OpPower.into()),
             _ => {}
         }
     }
@@ -101,9 +98,17 @@ impl<'a> Compiler<'a> {
     fn parse_precedence(&mut self, precedence: Precedence) {
         self.parser.advance();
 
+        {
+            println!(
+                "previous: {:?}",
+                self.parser.get_previous().as_ref().unwrap().get_token_type()
+            );
+        }
+
         let parse_rule = self.get_rule(
             self.parser.get_previous().as_ref().unwrap().get_token_type()
         );
+        println!("parse_rule: {:?}", parse_rule);
 
         let prefix_rule = parse_rule.get_prefix();
 
@@ -112,6 +117,7 @@ impl<'a> Compiler<'a> {
 
             loop {
                 let current_ttype: TokenType;
+
                 {
                     current_ttype = self.parser
                         .get_current()
@@ -121,7 +127,8 @@ impl<'a> Compiler<'a> {
                         .clone();
                 }
                 let current_precedence = self.get_rule(&current_ttype).get_precedence();
-                if (precedence as usize) >= (*current_precedence as usize) {
+
+                if (*current_precedence as usize) < (precedence as usize) {
                     break;
                 }
                 self.parser.advance();

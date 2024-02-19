@@ -30,6 +30,7 @@ impl Chunk {
             OpCode::OpSubtract => self.simple_instruction("OP_SUBTRACT", offset),
             OpCode::OpMultiply => self.simple_instruction("OP_MULTIPLY", offset),
             OpCode::OpDivide => self.simple_instruction("OP_DIVIDE", offset),
+            OpCode::OpPower => self.simple_instruction("OP_POWER", offset),
         }
     }
 

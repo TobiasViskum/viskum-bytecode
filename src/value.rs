@@ -20,7 +20,7 @@ impl ValueArray {
         self.values.clear();
     }
 
-    #[cfg(feature = "debug_trace_execution")]
+    #[cfg(any(feature = "debug_trace_execution", feature = "debug_print_code"))]
     pub fn print_value(&self, constant: u8) {
         print!("{}", self.values[constant as usize])
     }

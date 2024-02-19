@@ -3,7 +3,7 @@ use crate::opcodes::*;
 
 pub type Value = f64;
 
-#[cfg(feature = "debug_trace_execution")]
+#[cfg(any(feature = "debug_trace_execution", feature = "debug_print_code"))]
 mod debug;
 
 #[derive(Debug)]
