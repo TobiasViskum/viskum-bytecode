@@ -4,4 +4,7 @@ This the is the bytecode virtual machine of the "Viskum" programming language
 
 ## Optimizations
 
-- Store the rules in a hashmap that's initialized once (so the same rule doesn't have to be recreated countless times)
+### 1
+
+- 1+1+1+1+1 takes 0.5ms while 1+1+....1+1 260 times takes 9ms. BAD PERFORMANCE
+  - Could be due to O(n) lookup times. Maybe use pointers instead of indexing, however this involve unsafe rust.
