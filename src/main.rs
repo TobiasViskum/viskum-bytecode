@@ -10,8 +10,9 @@ mod compiler;
 mod parser;
 mod precedence;
 mod parse_rule;
+mod macros;
 
-use std::{ process, io::{ self, stdout, Write, BufRead } };
+use std::{ io::{ self, stdout, BufRead, Write }, net::TcpListener, process };
 
 use util::print::print_error;
 use vm::VM;
@@ -32,7 +33,7 @@ fn main() {
 
     let mut vm = VM::new();
 
-    vm.free()
+    vm.free_vm()
 }
 
 fn run(source: &str) {
@@ -45,7 +46,7 @@ fn run(source: &str) {
         _ => {}
     }
 
-    vm.free()
+    vm.free_vm()
 }
 
 fn run_file(path: &String) {

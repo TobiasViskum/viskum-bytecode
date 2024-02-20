@@ -1,9 +1,9 @@
 use crate::{
-    chunk::Value,
     opcodes::OpCode,
     parse_rule::{ ParseRule, PARSE_RULES },
     precedence::Precedence,
     token::token_type::TokenType,
+    value::ValueType,
 };
 use super::Compiler;
 use Precedence::*;
@@ -34,18 +34,19 @@ impl<'a> Compiler<'a> {
 
     pub fn number(&mut self) {
         let previous = self.parser.get_previous().as_ref().unwrap();
-        let value = previous.get_lexeme(self.source).parse::<Value>().unwrap();
+
+        let value = previous.get_lexeme(self.source).parse::<f64>().unwrap();
         let line = previous.get_line();
 
-        self.emit_constant(value, line);
+        self.emit_constant(ValueType::Float64(value), line);
     }
 
-    fn emit_constant(&mut self, value: Value, line: usize) {
+    fn emit_constant(&mut self, value: ValueType, line: usize) {
         let constant = self.make_constant(value, line);
         self.emit_bytes(OpCode::OpConstant.into(), constant)
     }
 
-    fn make_constant(&mut self, value: Value, line: usize) -> u8 {
+    fn make_constant(&mut self, value: ValueType, line: usize) -> u8 {
         let constant = self.compiling_chunk.write_constant(value, line);
 
         // let constant = self.add_constant(current_chunk, value);
@@ -65,8 +66,6 @@ impl<'a> Compiler<'a> {
         let operator_type = {
             self.parser.get_previous().as_ref().unwrap().get_token_type().clone()
         };
-
-        self.expression();
 
         self.parse_precedence(PrecUnary);
 
@@ -98,17 +97,9 @@ impl<'a> Compiler<'a> {
     fn parse_precedence(&mut self, precedence: Precedence) {
         self.parser.advance();
 
-        {
-            println!(
-                "previous: {:?}",
-                self.parser.get_previous().as_ref().unwrap().get_token_type()
-            );
-        }
-
         let parse_rule = self.get_rule(
             self.parser.get_previous().as_ref().unwrap().get_token_type()
         );
-        println!("parse_rule: {:?}", parse_rule);
 
         let prefix_rule = parse_rule.get_prefix();
 
@@ -140,7 +131,7 @@ impl<'a> Compiler<'a> {
                 }
             }
         } else {
-            self.parser.report_error(&"Expected expression".to_string());
+            // self.parser.report_error(&"Expected expression".to_string());
         }
     }
 

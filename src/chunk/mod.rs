@@ -1,5 +1,4 @@
 use crate::value::*;
-use crate::opcodes::*;
 
 pub type Value = f64;
 
@@ -22,7 +21,7 @@ impl Chunk {
         &self.code
     }
 
-    pub fn read_constant(&self, index: u16) -> Value {
+    pub fn read_constant(&self, index: u16) -> ValueType {
         self.constants.read(index as usize)
     }
 
@@ -39,7 +38,7 @@ impl Chunk {
         }
     }
 
-    pub fn write_constant(&mut self, value: Value, line: usize) -> usize {
+    pub fn write_constant(&mut self, value: ValueType, line: usize) -> usize {
         let index = self.constants.write(value);
         // 0xFF = 255 and is the length of a byte
         // if index <= 0xff {
@@ -59,5 +58,17 @@ impl Chunk {
     pub fn free(&mut self) {
         self.code.clear();
         self.constants.free();
+    }
+
+    pub fn get_line(&self, offset: usize) -> usize {
+        let mut current = 0;
+        for (_, (line, run_length)) in self.lines.iter().enumerate() {
+            current += run_length;
+            if current >= offset {
+                return *line;
+            }
+        }
+
+        0
     }
 }

@@ -16,15 +16,10 @@ impl<'a> Compiler<'a> {
     }
 
     pub fn compile(&mut self) -> bool {
-        println!(
-            "current token: {:?}",
-            self.parser.get_current().as_ref().unwrap().get_token_type()
-        );
-
         self.expression();
 
         let current = self.parser.get_current().as_ref().unwrap();
-        println!("token before end: {:?}", current.get_token_type());
+
         self.parser.consume(TokenType::TokenEof, "Expected end of expression");
         self.end_compiler();
 

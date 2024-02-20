@@ -57,16 +57,4 @@ impl Chunk {
         println!("'");
         offset + 4
     }
-
-    pub fn get_line(&self, offset: usize) -> usize {
-        let mut current = 0;
-        for (_, (line, run_length)) in self.lines.iter().enumerate() {
-            current += run_length;
-            if current >= offset {
-                return *line;
-            }
-        }
-
-        0
-    }
 }

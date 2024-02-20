@@ -1,7 +1,9 @@
 pub state<int> count := state(0)
 
 pub fn Counter() {
-    float sum := 2 + 3 + 4
+    float<32> sum := 2 + 3
+
+    int<8> sum := 256;
 
     return (
         <div>
