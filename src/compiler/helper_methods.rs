@@ -71,6 +71,7 @@ impl<'a> Compiler<'a> {
 
         match operator_type {
             TokenType::TokenMinus => self.emit_byte(OpCode::OpNegate.into()),
+            TokenType::TokenBang => self.emit_byte(OpCode::OpNot.into()),
             _ => {}
         }
     }
@@ -85,11 +86,28 @@ impl<'a> Compiler<'a> {
         self.parse_precedence(parse_rule.get_precedence().get_next());
 
         match operator_type {
+            TokenBangEqual => self.emit_byte(OpCode::OpBangEqual.into()),
+            TokenEqualEqual => self.emit_byte(OpCode::OpEqualEqual.into()),
+            TokenGreater => self.emit_byte(OpCode::OpGreater.into()),
+            TokenGreaterEqual => self.emit_byte(OpCode::OpGreaterEqual.into()),
+            TokenLess => self.emit_byte(OpCode::OpLess.into()),
+            TokenLessEqual => self.emit_byte(OpCode::OpLessEqual.into()),
+
             TokenPlus => self.emit_byte(OpCode::OpAdd.into()),
             TokenMinus => self.emit_byte(OpCode::OpSubtract.into()),
             TokenStar => self.emit_byte(OpCode::OpMultiply.into()),
             TokenSlash => self.emit_byte(OpCode::OpDivide.into()),
             TokenPower => self.emit_byte(OpCode::OpPower.into()),
+            _ => {}
+        }
+    }
+
+    pub fn literal(&mut self) {
+        let previous_ttype = self.parser.get_previous().as_ref().unwrap().get_token_type();
+        match previous_ttype {
+            TokenFalse => self.emit_byte(OpCode::OpFalse.into()),
+            TokenTrue => self.emit_byte(OpCode::OpTrue.into()),
+            TokenNull => self.emit_byte(OpCode::OpNull.into()),
             _ => {}
         }
     }
@@ -131,7 +149,7 @@ impl<'a> Compiler<'a> {
                 }
             }
         } else {
-            // self.parser.report_error(&"Expected expression".to_string());
+            self.parser.report_error(&"Expected expression".to_string());
         }
     }
 

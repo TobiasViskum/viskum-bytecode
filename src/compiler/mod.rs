@@ -18,8 +18,6 @@ impl<'a> Compiler<'a> {
     pub fn compile(&mut self) -> bool {
         self.expression();
 
-        let current = self.parser.get_current().as_ref().unwrap();
-
         self.parser.consume(TokenType::TokenEof, "Expected end of expression");
         self.end_compiler();
 

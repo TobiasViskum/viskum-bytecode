@@ -154,7 +154,15 @@ impl VM {
                     let constant = self.read_constant();
                     self.stack.push(constant);
                 }
-
+                OpCode::OpNull => {
+                    self.stack.push(ValueType::Null);
+                }
+                OpCode::OpTrue => {
+                    self.stack.push(ValueType::Bool(true));
+                }
+                OpCode::OpFalse => {
+                    self.stack.push(ValueType::Bool(false));
+                }
                 OpCode::OpConstantLong => {
                     let constant = self.read_long_constant();
                     self.stack.push(constant);
@@ -172,11 +180,46 @@ impl VM {
                         Err(msg) => eprintln!("{}", msg),
                     }
                 }
+                OpCode::OpNot => {
+                    let v = self.stack.pop().unwrap();
+                    self.stack.push(ValueType::Bool(v.is_falsey()));
+                }
                 OpCode::OpAdd => self.binary_op(|a, b| a + b),
                 OpCode::OpSubtract => self.binary_op(|a, b| a - b),
                 OpCode::OpMultiply => self.binary_op(|a, b| a * b),
                 OpCode::OpDivide => self.binary_op(|a, b| a / b),
                 OpCode::OpPower => self.binary_op(|a, b| a.pow(b)),
+
+                OpCode::OpEqualEqual => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(ValueType::Bool(a == b));
+                }
+                OpCode::OpBangEqual => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(ValueType::Bool(a != b));
+                }
+                OpCode::OpGreater => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(ValueType::Bool(a > b));
+                }
+                OpCode::OpGreaterEqual => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(ValueType::Bool(a >= b));
+                }
+                OpCode::OpLess => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(ValueType::Bool(a < b));
+                }
+                OpCode::OpLessEqual => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(ValueType::Bool(a <= b));
+                }
             }
         }
     }

@@ -1,6 +1,6 @@
 use std::{ error::Error, ops::{ Add, Div, Mul, MulAssign, Neg, Sub } };
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, PartialOrd)]
 pub enum ValueType {
     Float64(f64),
     // Float32(f32),
@@ -24,6 +24,10 @@ impl ValueType {
             ValueType::Bool(_) => "Bool".to_string(),
             ValueType::Null => "Null".to_string(),
         }
+    }
+
+    pub fn is_falsey(&self) -> bool {
+        matches!(self, Self::Null | Self::Bool(false))
     }
 }
 

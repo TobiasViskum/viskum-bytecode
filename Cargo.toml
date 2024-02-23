@@ -11,7 +11,11 @@ colorize = "0.1.0"
 statrs = "0.16.0"
 lazy_static = "1.4.0"
 
+[build_dependencies]
+regex = "1.10.3"
+
 [features]
 debug_trace_execution = []
 debug_print_code = []
 debug_elapsed_time = []
+debug_all = ["debug_trace_execution", "debug_print_code", "debug_elapsed_time"]
