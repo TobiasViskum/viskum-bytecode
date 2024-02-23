@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use crate::{ chunk::Value, value::ValueType, * };
+    use crate::{ value::ValueType, * };
 
     #[test]
     fn test_negation() {
