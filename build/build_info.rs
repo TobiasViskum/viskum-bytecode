@@ -1,4 +1,4 @@
-pub const OPCODES: [&str; 22] = [
+pub const OPCODES: [&str; 24] = [
     "OpReturn               = 0  | simple_instruction",
     "OpConstant             = 1  | constant_instruction",
     "OpConstantLong         = 2  | constant_long_instruction",
@@ -21,9 +21,11 @@ pub const OPCODES: [&str; 22] = [
     "OpInterpolate          = 19 | simple_instruction",
     "OpPrint                = 20 | simple_instruction",
     "OpPop                  = 21 | simple_instruction",
+    "OpDefineGlobal         = 22 | constant_instruction",
+    "OpGetGlobal            = 23 | constant_instruction",
 ];
 
-pub const TOKENTYPES: [&str; 45] = [
+pub const TOKENTYPES: [&str; 54] = [
     "TokenLeftParen            <=>  left parenthesis",
     "TokenRightParen           <=>  right parenthesis",
     "TokenLeftBrace            <=>  left curly brace",
@@ -55,6 +57,17 @@ pub const TOKENTYPES: [&str; 45] = [
     "TokenString               <=>  string literal",
     "TokenNumber               <=>  number literal",
 
+    "TokenTypeString           <=>  string",
+    "TokenTypeFloat32              <=>  float32",
+    "TokenTypeFloat64              <=>  float64",
+    "TokenTypeInt                  <=>  int",
+    "TokenTypeInt8                 <=>  int8",
+    "TokenTypeInt16                <=>  int16",
+    "TokenTypeInt32                <=>  int32",
+    "TokenTypeInt64                <=>  int64",
+
+    "TokenDeclaration          <=>  declaration",
+    "TokenColon                <=>  colon",
     "TokenAnd                  <=>  and",
     "TokenClass                <=>  class",
     "TokenElse                 <=>  else",
@@ -68,7 +81,6 @@ pub const TOKENTYPES: [&str; 45] = [
     "TokenReturn               <=>  return",
     "TokenThis                 <=>  this",
     "TokenTrue                 <=>  true",
-    "TokenLet                  <=>  let",
     "TokenWhile                <=>  while",
 
     "TokenExprEnd              <=>  end of expression",
@@ -76,7 +88,7 @@ pub const TOKENTYPES: [&str; 45] = [
     "TokenEof                  <=>  end of file",
 ];
 
-pub const PARSE_RULES: [&str; 44] = [
+pub const PARSE_RULES: [&str; 45] = [
     "LeftParen              = { grouping,    None,   PrecNone       }",
     "RightParen             = { None,        None,   PrecNone       }",
     "LeftBrace              = { None,        None,   PrecNone       }",
@@ -103,10 +115,12 @@ pub const PARSE_RULES: [&str; 44] = [
     "InterpolationStart     = { interpolate, None,   PrecNone       }",
     "InterpolationEnd       = { None,        None,   PrecNone       }",
 
-    "Identifier             = { None,        None,   PrecNone       }",
+    "Identifier             = { variable,    None,   PrecNone       }",
     "String                 = { None,        None,   PrecNone       }",
     "Number                 = { number,      None,   PrecNone       }",
 
+    "Declaration            = { None,        None,   PrecNone       }",
+    "Colon                  = { None,        None,   PrecNone       }",
     "And                    = { None,        None,   PrecNone       }",
     "Class                  = { None,        None,   PrecNone       }",
     "Else                   = { None,        None,   PrecNone       }",
@@ -120,7 +134,6 @@ pub const PARSE_RULES: [&str; 44] = [
     "Return                 = { None,        None,   PrecNone       }",
     "This                   = { None,        None,   PrecNone       }",
     "True                   = { literal,     None,   PrecNone       }",
-    "Let                    = { None,        None,   PrecNone       }",
     "While                  = { None,        None,   PrecNone       }",
     "ExprEnd                = { None,        None,   PrecNone       }",
     "Error(\"This can never be read\".to_string())  = { None,       None,   PrecNone }",

@@ -97,4 +97,29 @@ mod test {
             ]
         );
     }
+
+    #[test]
+    fn test_variable_assignment() {
+        use crate::lexer::Lexer;
+
+        let source = "hello := 2";
+        let mut lexer = Lexer::new(source);
+
+        let (token_names, token_lexemes) = lexer.get_token_names_and_lexemes_vec();
+
+        assert_eq!(
+            token_names,
+            vec![
+                String::from("identifier"),
+                String::from("declaration"),
+                String::from("number literal"),
+                String::from("end of file")
+            ]
+        );
+
+        assert_eq!(
+            token_lexemes,
+            vec![String::from("hello"), String::from(":="), String::from("2"), String::from("")]
+        )
+    }
 }

@@ -1,7 +1,5 @@
 use crate::value::*;
 
-pub type Value = f64;
-
 #[cfg(any(feature = "debug_trace_execution", feature = "debug_print_code"))]
 mod debug;
 
@@ -14,14 +12,18 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new() -> Self {
-        Self { code: Vec::new(), constants: ValueArray::new(), lines: Vec::new() }
+        Self {
+            code: Vec::new(),
+            constants: ValueArray::new(),
+            lines: Vec::new(),
+        }
     }
 
     pub fn get_code(&self) -> &Vec<u8> {
         &self.code
     }
 
-    pub fn read_constant(&self, index: u16) -> ValueType {
+    pub fn read_constant(&self, index: u16) -> Value {
         self.constants.read(index as usize)
     }
 
@@ -38,7 +40,7 @@ impl Chunk {
         }
     }
 
-    pub fn write_constant(&mut self, value: ValueType, line: usize) -> usize {
+    pub fn write_constant(&mut self, value: Value, line: usize) -> usize {
         let index = self.constants.write(value);
         // 0xFF = 255 and is the length of a byte
         // if index <= 0xff {

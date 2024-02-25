@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use crate::{ lexer::Lexer, token::{ Token, token_type::TokenType } };
 
 #[derive(Debug)]

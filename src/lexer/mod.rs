@@ -83,6 +83,13 @@ impl<'a> Lexer<'a> {
                 self.make_token(TokenRightBrace)
             }
 
+            ":" => {
+                if self.match_char("=") {
+                    self.make_token(TokenDeclaration)
+                } else {
+                    self.make_token(TokenColon)
+                }
+            }
             ";" => self.make_token(TokenSemicolon),
             "," => self.make_token(TokenComma),
             "." => self.make_token(TokenDot),

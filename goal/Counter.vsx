@@ -1,9 +1,16 @@
-pub state<int> count := state(0)
+pub state<i16> count := state(0)
 
 pub fn Counter() {
-    float<32> sum := 2 + 3
+    i8 val
 
-    int<8> sum := 256;
+    if count == 0 {
+        val = 2
+    } else {
+        val = 4
+    }
+
+    f32 derived := (sum + count) / 2
+
 
     return (
         <div>

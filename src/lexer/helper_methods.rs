@@ -208,18 +208,35 @@ impl<'a> Lexer<'a> {
                         "a" => self.check_keyword(2, 3, "lse", TokenFalse),
                         "o" => self.check_keyword(2, 1, "r", TokenFor),
                         "n" => TokenFn,
+                        "3" => self.check_keyword(2, 1, "2", TokenTypeFloat32),
+                        "6" => self.check_keyword(2, 1, "4", TokenTypeFloat64),
                         _ => TokenIdentifier,
                     }
                 } else {
                     TokenIdentifier
                 }
             }
-            "i" => self.check_keyword(1, 1, "f", TokenIf),
-            "l" => self.check_keyword(1, 2, "et", TokenLet),
+            "i" => {
+                if self.current - self.start > 1 {
+                    match self.get_character(self.start + 1).0 {
+                        "f" => TokenIf,
+                        "8" => TokenTypeInt8,
+                        "1" => self.check_keyword(2, 1, "6", TokenTypeInt16),
+                        "3" => self.check_keyword(2, 1, "2", TokenTypeInt32),
+                        "6" => self.check_keyword(2, 1, "4", TokenTypeInt64),
+                        "n" => self.check_keyword(2, 1, "n", TokenTypeInt),
+                        _ => TokenIdentifier,
+                    }
+                } else {
+                    TokenIdentifier
+                }
+            }
+            // "l" => self.check_keyword(1, 2, "et", TokenLet),
             "n" => self.check_keyword(1, 3, "ull", TokenNull),
             "o" => self.check_keyword(1, 1, "r", TokenOr),
             "p" => self.check_keyword(1, 4, "rint", TokenPrint),
             "r" => self.check_keyword(1, 5, "eturn", TokenReturn),
+            "s" => self.check_keyword(1, 5, "tring", TokenTypeString),
             "t" => {
                 if self.current - self.start > 1 {
                     match self.get_character(self.start + 1).0 {

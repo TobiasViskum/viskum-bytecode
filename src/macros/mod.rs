@@ -15,7 +15,7 @@ macro_rules! perform_op {
                     "Failed to perform operation"
                 };
                 $vm.runtime_error(msg);
-                return ValueType::Null
+                return Value::Null
             }
         }
     };

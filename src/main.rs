@@ -36,22 +36,19 @@ fn main() {
     vm.free_vm()
 }
 
-fn run(source: &str) {
-    let mut vm = VM::new();
-
+fn run(source: &str, vm: &mut VM) {
     match vm.interpret(source) {
         InterpretResult::CompileError => process::exit(65),
         InterpretResult::RuntimeError => process::exit(70),
-        InterpretResult::Ok => process::exit(0),
+        InterpretResult::Ok => {}
         _ => {}
     }
-
-    vm.free_vm()
 }
 
 fn run_file(path: &String) {
+    let vm = &mut VM::new();
     match std::fs::read_to_string(path) {
-        Ok(str) => run(str.as_str()),
+        Ok(str) => run(str.as_str(), vm),
         Err(e) => {
             print_error(format!("There was an error while reading file: {}", e).as_str());
             process::exit(64);
@@ -60,6 +57,7 @@ fn run_file(path: &String) {
 }
 
 fn run_prompt() {
+    let vm = &mut VM::new();
     let stdin = io::stdin();
     print!("> ");
     let _ = stdout().flush();
@@ -68,7 +66,7 @@ fn run_prompt() {
             if line.is_empty() {
                 break;
             }
-            run(line.as_str());
+            run(line.as_str(), vm);
         } else {
             break;
         }

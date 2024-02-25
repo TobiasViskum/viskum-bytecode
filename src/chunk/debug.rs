@@ -68,6 +68,8 @@ impl Chunk {
             OpCode::OpInterpolate => self.simple_instruction("OP_INTERPOLATE", offset),
             OpCode::OpPrint => self.simple_instruction("OP_PRINT", offset),
             OpCode::OpPop => self.simple_instruction("OP_POP", offset),
+            OpCode::OpDefineGlobal => self.constant_instruction("OP_DEFINE_GLOBAL", offset),
+            OpCode::OpGetGlobal => self.constant_instruction("OP_GET_GLOBAL", offset),
         }
     }
 }

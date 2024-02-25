@@ -4,18 +4,53 @@ use crate::{
     parse_rule::{ ParseRule, PARSE_RULES },
     precedence::Precedence,
     token::token_type::TokenType,
-    value::ValueType,
+    value::{ Value, ValueType },
 };
 use Precedence::*;
 use TokenType::*;
 
 impl<'a> Compiler<'a> {
     pub fn declaration(&mut self) {
-        self.statement();
+        let current_ttype = self.get_current();
+
+        match current_ttype.get_token_type() {
+            // TokenTypeFloat32 => {
+            //     self.parser.advance();
+
+            //     let identifier_lexeme = self.get_current().get_lexeme(self.source).clone();
+            // }
+            TokenIdentifier => {
+                let identifier_lexeme = current_ttype.get_lexeme(self.source).clone();
+
+                self.parser.advance();
+
+                let new_current_ttype = self.get_current().get_token_type();
+                if new_current_ttype == &TokenDeclaration {
+                    self.variable_declaration(identifier_lexeme, ValueType::Dynamic);
+                } else if new_current_ttype == &TokenEqual {
+                    self.statement();
+                }
+            }
+            _ => self.statement(),
+        }
 
         if self.parser.get_panic_mode() {
             self.synchronize()
         }
+    }
+
+    fn variable_declaration(&mut self, lexeme: String, value_type: ValueType) {
+        let declaration_index = self.parse_declaration_name(lexeme, value_type);
+
+        if self.is_match(&TokenDeclaration) {
+            self.expression();
+        } else {
+            self.emit_byte(OpCode::OpNull.into());
+        }
+
+        self.consume_expr_end("Expected ';' after variable declaration");
+
+        self.define_variable(declaration_index)
     }
 
     fn statement(&mut self) {
@@ -28,18 +63,28 @@ impl<'a> Compiler<'a> {
 
     fn print_statement(&mut self) {
         self.expression();
-        self.parser.consume(TokenSemicolon, "Expected ';' after value");
+        self.consume_expr_end("Expected ';' after value");
         self.emit_byte(OpCode::OpPrint.into());
     }
 
     fn expression_statement(&mut self) {
         self.expression();
-        self.parser.consume(TokenSemicolon, "Expected ';' after value");
+        self.consume_expr_end("Expected ';' after value");
         self.emit_byte(OpCode::OpPop.into());
     }
 
     fn expression(&mut self) {
         self.parse_precedence(PrecAssignment)
+    }
+
+    fn named_variable(&mut self, lexeme: String) {
+        let variable_index = self.identifier_constant(lexeme, ValueType::Empty);
+        self.emit_bytes(OpCode::OpGetGlobal.into(), variable_index)
+    }
+
+    pub fn variable(&mut self) {
+        let lexeme = self.get_previous().get_lexeme(self.source);
+        self.named_variable(lexeme)
     }
 
     pub fn interpolate(&mut self) {
@@ -64,20 +109,20 @@ impl<'a> Compiler<'a> {
 
         if self.get_previous().get_token_type() == &TokenStringEnd {
             self.parser.advance();
-            self.emit_constant(ValueType::String("".to_string()), self.get_previous().get_line());
+            self.emit_constant(Value::String("".to_string()), self.get_previous().get_line());
             return;
         }
 
         let previous = self.get_previous();
         if previous.get_token_type() == &TokenInterpolationStart {
-            self.emit_constant(ValueType::String("".to_string()), previous.get_line());
+            self.emit_constant(Value::String("".to_string()), previous.get_line());
             self.interpolate();
             return;
         }
 
         let string_lexeme = previous.get_lexeme_string(self.source);
 
-        self.emit_constant(ValueType::String(string_lexeme), previous.get_line());
+        self.emit_constant(Value::String(string_lexeme), previous.get_line());
 
         let new_previous = self.get_previous();
         if new_previous.get_token_type() == &TokenStringEnd {
@@ -93,11 +138,11 @@ impl<'a> Compiler<'a> {
         let lexeme = previous.get_lexeme(self.source);
 
         if let Ok(int_value) = lexeme.parse::<i32>() {
-            self.emit_constant(ValueType::Int32(int_value), line);
+            self.emit_constant(Value::Int32(int_value), line);
         } else if let Ok(int_value) = lexeme.parse::<i64>() {
-            self.emit_constant(ValueType::Int64(int_value), line);
+            self.emit_constant(Value::Int64(int_value), line);
         } else if let Ok(float_value) = lexeme.parse::<f64>() {
-            self.emit_constant(ValueType::Float64(float_value), line);
+            self.emit_constant(Value::Float64(float_value), line);
         }
     }
 

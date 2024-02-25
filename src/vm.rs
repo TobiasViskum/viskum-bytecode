@@ -1,9 +1,9 @@
-use crate::chunk::{ Chunk, Value };
+use crate::chunk::Chunk;
 use crate::compiler::Compiler;
 use crate::opcodes::OpCode;
-use crate::perform_op;
-use crate::value::{ Pow, ValueType };
-use std::panic;
+use crate::value::{ Pow, Value, ValueType };
+
+use std::collections::HashMap;
 #[cfg(feature = "debug_trace_execution")]
 use std::time::{ SystemTime, UNIX_EPOCH };
 
@@ -12,24 +12,31 @@ pub enum InterpretResult {
     Ok,
     CompileError,
     RuntimeError,
-    Debug(ValueType),
+    Debug(Value),
 }
 
 #[derive(Debug)]
 pub struct VM {
     chunk: Option<Chunk>,
     ip: usize,
-    stack: Vec<ValueType>,
+    stack: Vec<Value>,
     had_runtime_error: bool,
+    globals: HashMap<String, Value>,
     // stack_top: Value,
 }
 
 impl VM {
     pub fn new() -> Self {
-        Self { chunk: None, ip: 0, stack: Vec::with_capacity(256), had_runtime_error: false }
+        Self {
+            chunk: None,
+            ip: 0,
+            stack: Vec::with_capacity(256),
+            had_runtime_error: false,
+            globals: HashMap::with_capacity(4),
+        }
     }
 
-    pub fn get_stack(&self) -> &Vec<ValueType> {
+    pub fn get_stack(&self) -> &Vec<Value> {
         &self.stack
     }
 
@@ -110,6 +117,9 @@ impl VM {
     }
 
     fn run(&mut self) -> InterpretResult {
+        #[cfg(any(test, feature = "debug_trace_execution"))]
+        let mut _debug_result: Value = Value::Null;
+
         loop {
             #[cfg(feature = "debug_trace_execution")]
             {
@@ -130,13 +140,13 @@ impl VM {
                 OpCode::OpReturn => {
                     #[cfg(test)]
                     {
-                        return InterpretResult::Debug(self.stack.pop().unwrap());
+                        return InterpretResult::Debug(_debug_result);
                     }
 
                     #[cfg(feature = "debug_trace_execution")]
                     {
                         if !self.had_runtime_error && self.stack.len() > 0 {
-                            println!("{:?}", self.stack.pop().unwrap());
+                            println!("{:?}", _debug_result);
                         }
                     }
 
@@ -153,13 +163,13 @@ impl VM {
                     self.stack.push(constant);
                 }
                 OpCode::OpNull => {
-                    self.stack.push(ValueType::Null);
+                    self.stack.push(Value::Null);
                 }
                 OpCode::OpTrue => {
-                    self.stack.push(ValueType::Bool(true));
+                    self.stack.push(Value::Bool(true));
                 }
                 OpCode::OpFalse => {
-                    self.stack.push(ValueType::Bool(false));
+                    self.stack.push(Value::Bool(false));
                 }
                 OpCode::OpConstantLong => {
                     let constant = self.read_long_constant();
@@ -168,7 +178,7 @@ impl VM {
                 OpCode::OpNegate => {
                     // Reimplement this
                     // if let Some(last) = self.stack.last_mut() {
-                    //     *last *= ValueType::Float64(-1.0);
+                    //     *last *= Value::Float64(-1.0);
                     // }
 
                     let value = self.stack.pop().unwrap();
@@ -180,7 +190,7 @@ impl VM {
                 }
                 OpCode::OpNot => {
                     let v = self.stack.pop().unwrap();
-                    self.stack.push(ValueType::Bool(v.is_falsey()));
+                    self.stack.push(Value::Bool(v.is_falsey()));
                 }
                 OpCode::OpAdd => self.binary_op(|a, b| a + b),
                 OpCode::OpSubtract => self.binary_op(|a, b| a - b),
@@ -191,46 +201,79 @@ impl VM {
                 OpCode::OpEqualEqual => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    self.stack.push(ValueType::Bool(a == b));
+                    self.stack.push(Value::Bool(a == b));
                 }
                 OpCode::OpBangEqual => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    self.stack.push(ValueType::Bool(a != b));
+                    self.stack.push(Value::Bool(a != b));
                 }
                 OpCode::OpGreater => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    self.stack.push(ValueType::Bool(a > b));
+                    self.stack.push(Value::Bool(a > b));
                 }
                 OpCode::OpGreaterEqual => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    self.stack.push(ValueType::Bool(a >= b));
+                    self.stack.push(Value::Bool(a >= b));
                 }
                 OpCode::OpLess => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    self.stack.push(ValueType::Bool(a < b));
+                    self.stack.push(Value::Bool(a < b));
                 }
                 OpCode::OpLessEqual => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    self.stack.push(ValueType::Bool(a <= b));
+                    self.stack.push(Value::Bool(a <= b));
                 }
                 OpCode::OpInterpolate => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    self.stack.push(
-                        ValueType::String(format!("{}{}", a.to_string(), b.to_string()))
-                    );
+                    self.stack.push(Value::String(format!("{}{}", a.to_string(), b.to_string())));
                 }
                 OpCode::OpPrint => {
                     let value = self.stack.pop().unwrap();
                     println!("{}", value.to_string());
                 }
                 OpCode::OpPop => {
-                    self.stack.pop();
+                    #[cfg(any(test, feature = "debug_trace_execution"))]
+                    {
+                        _debug_result = self.stack.pop().unwrap();
+                        continue;
+                    }
+                    #[allow(unreachable_code)]
+                    {
+                        self.stack.pop();
+                    }
+                }
+                OpCode::OpDefineGlobal => {
+                    let constant = self.read_constant();
+
+                    if let Value::Variable(variable) = constant {
+                        let value = self.stack.pop().unwrap();
+
+                        // match variable.get_value_type() {
+                        //     ValueType
+                        // }
+
+                        self.globals.insert(variable.get_name(), value);
+                    } else {
+                        self.runtime_error("Expected a variable to define");
+                    }
+                }
+                OpCode::OpGetGlobal => {
+                    let constant = self.read_constant();
+                    if let Value::Variable(variable) = constant {
+                        if let Some(value) = self.globals.get(&variable.get_name()) {
+                            self.stack.push(value.clone());
+                        } else {
+                            self.runtime_error("Undefined variable");
+                        }
+                    } else {
+                        self.runtime_error("Expected a variable to get");
+                    }
                 }
             }
         }
@@ -258,12 +301,12 @@ impl VM {
         result
     }
 
-    fn read_constant(&mut self) -> ValueType {
+    fn read_constant(&mut self) -> Value {
         let byte = self.read_byte().into();
         self.chunk.as_ref().unwrap().read_constant(byte)
     }
 
-    fn read_long_constant(&mut self) -> ValueType {
+    fn read_long_constant(&mut self) -> Value {
         let bytes = self.read_bytes(3);
         self.chunk
             .as_ref()
@@ -271,7 +314,7 @@ impl VM {
             .read_constant(bytes as u16)
     }
 
-    fn binary_op(&mut self, op: fn(a: ValueType, b: ValueType) -> Result<ValueType, String>) {
+    fn binary_op(&mut self, op: fn(a: Value, b: Value) -> Result<Value, String>) {
         let b = match self.stack.pop() {
             Some(b) => b,
             None => {
