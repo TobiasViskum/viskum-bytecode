@@ -2,7 +2,7 @@ use crate::{
     opcodes::OpCode,
     parse_rule::{ ParseRule, PARSE_RULES },
     precedence::Precedence,
-    token::token_type::TokenType,
+    token::{ token_type::TokenType, Token },
     value::ValueType,
 };
 use super::Compiler;
@@ -32,13 +32,77 @@ impl<'a> Compiler<'a> {
         self.parse_precedence(PrecAssignment)
     }
 
+    fn get_previous(&self) -> &Token {
+        self.parser.get_previous().as_ref().unwrap()
+    }
+
+    fn get_current(&self) -> &Token {
+        self.parser.get_current().as_ref().unwrap()
+    }
+
+    pub fn interpolate(&mut self) {
+        self.expression();
+
+        self.emit_byte(OpCode::OpInterpolate.into());
+
+        self.parser.consume(TokenInterpolationEnd, "Expected '}' after interpolation");
+        self.parser.advance();
+
+        if !(self.get_previous().get_token_type() == &TokenStringEnd) {
+            self.string();
+            self.emit_byte(OpCode::OpInterpolate.into());
+        }
+
+        // println!("previous2: {:?}", self.get_previous());
+        // if self.get_current() == &TokenStringEnd {
+        //     self.parser.advance();
+        // } else {
+        //     self.parser.advance();
+
+        //     self.string();
+        //     self.emit_byte(OpCode::OpInterpolate.into());
+        // }
+    }
+
+    pub fn string(&mut self) {
+        if self.get_previous().get_token_type() == &TokenStringStart {
+            self.parser.advance();
+        }
+
+        let previous = self.get_previous();
+
+        if previous.get_token_type() == &TokenInterpolationStart {
+            self.emit_constant(ValueType::String("".to_string()), previous.get_line());
+            self.interpolate();
+            return;
+        }
+
+        let string_lexeme = previous.get_lexeme_string(self.source);
+
+        self.emit_constant(ValueType::String(string_lexeme), previous.get_line());
+
+        let new_previous = self.get_previous();
+        if new_previous.get_token_type() == &TokenStringEnd {
+            self.parser.advance();
+        } else {
+            self.expression();
+        }
+    }
+
     pub fn number(&mut self) {
-        let previous = self.parser.get_previous().as_ref().unwrap();
-
-        let value = previous.get_lexeme(self.source).parse::<f64>().unwrap();
+        let previous = self.get_previous();
         let line = previous.get_line();
+        let lexeme = previous.get_lexeme(self.source);
 
-        self.emit_constant(ValueType::Float64(value), line);
+        print!("lexeme: {:?}", lexeme);
+
+        if let Ok(int_value) = lexeme.parse::<i32>() {
+            self.emit_constant(ValueType::Int32(int_value), line);
+        } else if let Ok(int_value) = lexeme.parse::<i64>() {
+            self.emit_constant(ValueType::Int64(int_value), line);
+        } else if let Ok(float_value) = lexeme.parse::<f64>() {
+            self.emit_constant(ValueType::Float64(float_value), line);
+        }
     }
 
     fn emit_constant(&mut self, value: ValueType, line: usize) {
@@ -103,7 +167,7 @@ impl<'a> Compiler<'a> {
     }
 
     pub fn literal(&mut self) {
-        let previous_ttype = self.parser.get_previous().as_ref().unwrap().get_token_type();
+        let previous_ttype = self.get_previous().get_token_type();
         match previous_ttype {
             TokenFalse => self.emit_byte(OpCode::OpFalse.into()),
             TokenTrue => self.emit_byte(OpCode::OpTrue.into()),
@@ -115,9 +179,7 @@ impl<'a> Compiler<'a> {
     fn parse_precedence(&mut self, precedence: Precedence) {
         self.parser.advance();
 
-        let parse_rule = self.get_rule(
-            self.parser.get_previous().as_ref().unwrap().get_token_type()
-        );
+        let parse_rule = self.get_rule(self.get_previous().get_token_type());
 
         let prefix_rule = parse_rule.get_prefix();
 
@@ -128,12 +190,7 @@ impl<'a> Compiler<'a> {
                 let current_ttype: TokenType;
 
                 {
-                    current_ttype = self.parser
-                        .get_current()
-                        .as_ref()
-                        .unwrap()
-                        .get_token_type()
-                        .clone();
+                    current_ttype = self.get_current().get_token_type().clone();
                 }
                 let current_precedence = self.get_rule(&current_ttype).get_precedence();
 
@@ -149,7 +206,7 @@ impl<'a> Compiler<'a> {
                 }
             }
         } else {
-            self.parser.report_error(&"Expected expression".to_string());
+            // self.parser.report_error(&"Expected expression".to_string());
         }
     }
 

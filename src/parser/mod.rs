@@ -1,5 +1,6 @@
 use crate::{ lexer::Lexer, token::{ Token, token_type::TokenType } };
 
+#[derive(Debug)]
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     current: Option<Token>,

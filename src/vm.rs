@@ -135,7 +135,7 @@ impl VM {
 
                     #[cfg(feature = "debug_trace_execution")]
                     {
-                        if !self.had_runtime_error {
+                        if !self.had_runtime_error && self.stack.len() > 0 {
                             println!("{:?}", self.stack.pop().unwrap());
                         } else {
                             eprintln!("Runtime error")
@@ -219,6 +219,13 @@ impl VM {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     self.stack.push(ValueType::Bool(a <= b));
+                }
+                OpCode::OpInterpolate => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(
+                        ValueType::String(format!("{}{}", a.to_string(), b.to_string()))
+                    );
                 }
             }
         }

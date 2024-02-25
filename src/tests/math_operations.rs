@@ -7,23 +7,23 @@ mod test {
         let mut vm = VM::new();
 
         let result = vm.interpret("-1");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(-1.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(-1)));
         vm.free_vm();
 
         let result = vm.interpret("-1 * 2");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(-2.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(-2)));
         vm.free_vm();
 
         let result = vm.interpret("-1 * -2");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(2.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(2)));
         vm.free_vm();
 
         let result = vm.interpret("-1 * -2 * -3");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(-6.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(-6)));
         vm.free_vm();
 
         let result = vm.interpret("-1 * -2 * -3 * -4");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(24.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(24)));
         vm.free_vm();
     }
 
@@ -45,11 +45,11 @@ mod test {
         let mut vm = VM::new();
 
         let result = vm.interpret("3 + 3 + 1");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(7.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(7)));
         vm.free_vm();
 
         let result = vm.interpret("1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(45.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(45)));
         vm.free_vm();
     }
 
@@ -58,11 +58,11 @@ mod test {
         let mut vm = VM::new();
 
         let result = vm.interpret("7 - 3 - 1");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(3.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(3)));
         vm.free_vm();
 
         let result = vm.interpret("1 - 9");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(-8.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(-8)));
         vm.free_vm();
     }
 
@@ -71,11 +71,11 @@ mod test {
         let mut vm = VM::new();
 
         let result = vm.interpret("8 * 8");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(64.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(64)));
         vm.free_vm();
 
         let result = vm.interpret("2 * 1 * 2");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(4.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(4)));
         vm.free_vm();
     }
 
@@ -97,15 +97,15 @@ mod test {
         let mut vm = VM::new();
 
         let result = vm.interpret("8 * (7 + 1)");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(64.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(64)));
         vm.free_vm();
 
         let result = vm.interpret("8 * 7 + 1");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(57.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(57)));
         vm.free_vm();
 
         let result = vm.interpret("8 - (2 - 4)");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(10.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(10)));
         vm.free_vm();
 
         let result = vm.interpret("8 * (7 + 1) / 2");
@@ -125,7 +125,7 @@ mod test {
         vm.free_vm();
 
         let result = vm.interpret("2 * (3 + 2 - 1)");
-        assert_eq!(result, InterpretResult::Debug(ValueType::Float64(8.0)));
+        assert_eq!(result, InterpretResult::Debug(ValueType::Int32(8)));
         vm.free_vm();
 
         let result = vm.interpret("2 * ()");

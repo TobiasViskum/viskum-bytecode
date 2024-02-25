@@ -5,6 +5,7 @@ use crate::{
 
 mod helper_methods;
 
+#[derive(Debug)]
 pub struct Lexer<'a> {
     source: &'a str,
     start: usize,
@@ -24,33 +25,6 @@ impl<'a> Lexer<'a> {
             string_count: 0,
             interpolation_count: 0,
         }
-    }
-
-    #[cfg(test)]
-    pub fn get_token_names_and_lexemes_vec(&mut self) -> (Vec<String>, Vec<String>) {
-        use crate::token::token_type::TokenType;
-
-        let mut token_names = Vec::new();
-        let mut token_lexemes = Vec::new();
-
-        loop {
-            let token = self.scan_token();
-
-            let token_name = token.get_token_type().as_str().to_string();
-            let lexeme = self.source
-                .get(token.get_start()..token.get_start() + token.get_length())
-                .unwrap()
-                .to_string();
-
-            token_names.push(token_name);
-            token_lexemes.push(lexeme);
-
-            if token.is(TokenType::TokenEof) {
-                break;
-            }
-        }
-
-        (token_names, token_lexemes)
     }
 
     pub fn scan_token(&mut self) -> Token {
@@ -88,9 +62,10 @@ impl<'a> Lexer<'a> {
             "{" => {
                 if self.string_count > 0 && !(self.peek() == "{") {
                     self.interpolation_count += 1;
-                    return self.make_token(TokenInterpolationStart);
+                    self.make_token(TokenInterpolationStart)
+                } else {
+                    self.make_token(TokenLeftBrace)
                 }
-                self.make_token(TokenLeftBrace)
             }
             "}" => {
                 if self.interpolation_count > 0 {
@@ -170,5 +145,32 @@ impl<'a> Lexer<'a> {
             }
             _ => self.error_token("Invalid character"),
         }
+    }
+
+    #[cfg(test)]
+    pub fn get_token_names_and_lexemes_vec(&mut self) -> (Vec<String>, Vec<String>) {
+        use crate::token::token_type::TokenType;
+
+        let mut token_names = Vec::new();
+        let mut token_lexemes = Vec::new();
+
+        loop {
+            let token = self.scan_token();
+
+            let token_name = token.get_token_type().as_str().to_string();
+            let lexeme = self.source
+                .get(token.get_start()..token.get_start() + token.get_length())
+                .unwrap()
+                .to_string();
+
+            token_names.push(token_name);
+            token_lexemes.push(lexeme);
+
+            if token.is(TokenType::TokenEof) {
+                break;
+            }
+        }
+
+        (token_names, token_lexemes)
     }
 }

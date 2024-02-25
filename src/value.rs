@@ -1,28 +1,42 @@
 use std::{ error::Error, ops::{ Add, Div, Mul, MulAssign, Neg, Sub } };
 
-#[derive(Debug, PartialEq, Clone, Copy, PartialOrd)]
+#[derive(Debug, PartialEq, Clone, PartialOrd)]
 pub enum ValueType {
     Float64(f64),
     // Float32(f32),
     Int64(i64),
-    // Int32(i32),
+    Int32(i32),
     // Int16(i16),
     // Int8(i8),
     // UnsignedInt64(u64),
     // UnsignedInt32(u32),
     // UnsignedInt16(u16),
     // UnsignedInt8(u8),
+    String(String),
     Bool(bool),
     Null,
 }
 
 impl ValueType {
+    pub fn to_string(&self) -> String {
+        match self {
+            ValueType::Float64(a) => a.to_string(),
+            ValueType::Int64(a) => a.to_string(),
+            ValueType::Int32(a) => a.to_string(),
+            ValueType::Bool(a) => a.to_string(),
+            ValueType::Null => "null".to_string(),
+            ValueType::String(a) => a.to_string(),
+        }
+    }
+
     pub fn to_type_string(&self) -> String {
         match self {
             ValueType::Float64(_) => "Float64".to_string(),
             ValueType::Int64(_) => "Int64".to_string(),
+            ValueType::Int32(_) => "Int32".to_string(),
             ValueType::Bool(_) => "Bool".to_string(),
             ValueType::Null => "Null".to_string(),
+            ValueType::String(_) => "String".to_string(),
         }
     }
 
@@ -42,6 +56,7 @@ impl Neg for ValueType {
         match self {
             ValueType::Float64(a) => Ok(ValueType::Float64(-a)),
             ValueType::Int64(a) => Ok(ValueType::Int64(-a)),
+            ValueType::Int32(a) => Ok(ValueType::Int32(-a)),
             _ => Err(format!("Cannot negate {:?}", self.to_type_string())),
         }
     }
@@ -54,6 +69,17 @@ impl Add for ValueType {
         match (&self, &other) {
             (ValueType::Float64(a), ValueType::Float64(b)) => Ok(ValueType::Float64(a + b)),
             (ValueType::Int64(a), ValueType::Int64(b)) => Ok(ValueType::Int64(a + b)),
+            (ValueType::Int32(a), ValueType::Int32(b)) => Ok(ValueType::Int32(a + b)),
+
+            (ValueType::Int64(a), ValueType::Int32(b)) => Ok(ValueType::Int64(a + (*b as i64))),
+            (ValueType::Int32(a), ValueType::Int64(b)) => Ok(ValueType::Int64((*a as i64) + b)),
+
+            (ValueType::Float64(a), ValueType::Int64(b)) => Ok(ValueType::Float64(a + (*b as f64))),
+            (ValueType::Int64(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) + b)),
+
+            (ValueType::Float64(a), ValueType::Int32(b)) => Ok(ValueType::Float64(a + (*b as f64))),
+            (ValueType::Int32(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) + b)),
+
             _ =>
                 Err(
                     format!(
@@ -73,6 +99,17 @@ impl Sub for ValueType {
         match (&self, &other) {
             (ValueType::Float64(a), ValueType::Float64(b)) => Ok(ValueType::Float64(a - b)),
             (ValueType::Int64(a), ValueType::Int64(b)) => Ok(ValueType::Int64(a - b)),
+            (ValueType::Int32(a), ValueType::Int32(b)) => Ok(ValueType::Int32(a - b)),
+
+            (ValueType::Int64(a), ValueType::Int32(b)) => Ok(ValueType::Int64(a - (*b as i64))),
+            (ValueType::Int32(a), ValueType::Int64(b)) => Ok(ValueType::Int64((*a as i64) - b)),
+
+            (ValueType::Float64(a), ValueType::Int64(b)) => Ok(ValueType::Float64(a - (*b as f64))),
+            (ValueType::Int64(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) - b)),
+
+            (ValueType::Float64(a), ValueType::Int32(b)) => Ok(ValueType::Float64(a - (*b as f64))),
+            (ValueType::Int32(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) - b)),
+
             _ =>
                 Err(
                     format!(
@@ -92,6 +129,16 @@ impl Mul for ValueType {
         match (&self, &other) {
             (ValueType::Float64(a), ValueType::Float64(b)) => Ok(ValueType::Float64(a * b)),
             (ValueType::Int64(a), ValueType::Int64(b)) => Ok(ValueType::Int64(a * b)),
+            (ValueType::Int32(a), ValueType::Int32(b)) => Ok(ValueType::Int32(a * b)),
+
+            (ValueType::Int64(a), ValueType::Int32(b)) => Ok(ValueType::Int64(a * (*b as i64))),
+            (ValueType::Int32(a), ValueType::Int64(b)) => Ok(ValueType::Int64((*a as i64) * b)),
+
+            (ValueType::Float64(a), ValueType::Int64(b)) => Ok(ValueType::Float64(a * (*b as f64))),
+            (ValueType::Int64(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) * b)),
+
+            (ValueType::Float64(a), ValueType::Int32(b)) => Ok(ValueType::Float64(a * (*b as f64))),
+            (ValueType::Int32(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) * b)),
             _ =>
                 Err(
                     format!(
@@ -110,7 +157,21 @@ impl Div for ValueType {
     fn div(self, other: Self) -> Result<Self, String> {
         match (&self, &other) {
             (ValueType::Float64(a), ValueType::Float64(b)) => Ok(ValueType::Float64(a / b)),
-            (ValueType::Int64(a), ValueType::Int64(b)) => Ok(ValueType::Int64(a / b)),
+            (ValueType::Int64(a), ValueType::Int64(b)) =>
+                Ok(ValueType::Float64((*a as f64) / (*b as f64))),
+            (ValueType::Int32(a), ValueType::Int32(b)) =>
+                Ok(ValueType::Float64((*a as f64) / (*b as f64))),
+
+            (ValueType::Int64(a), ValueType::Int32(b)) =>
+                Ok(ValueType::Float64((*a as f64) / (*b as f64))),
+            (ValueType::Int32(a), ValueType::Int64(b)) =>
+                Ok(ValueType::Float64((*a as f64) / (*b as f64))),
+
+            (ValueType::Float64(a), ValueType::Int64(b)) => Ok(ValueType::Float64(a / (*b as f64))),
+            (ValueType::Int64(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) / b)),
+
+            (ValueType::Float64(a), ValueType::Int32(b)) => Ok(ValueType::Float64(a / (*b as f64))),
+            (ValueType::Int32(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) / b)),
             _ =>
                 Err(
                     format!(
@@ -127,7 +188,26 @@ impl Pow for ValueType {
     fn pow(self, exp: Self) -> Result<Self, String> {
         match (&self, &exp) {
             (ValueType::Float64(a), ValueType::Float64(b)) => Ok(ValueType::Float64(a.powf(*b))),
-            (ValueType::Int64(a), ValueType::Int64(b)) => Ok(ValueType::Int64(a.pow(*b as u32))),
+            (ValueType::Int64(a), ValueType::Int64(b)) =>
+                Ok(ValueType::Float64((*a as f64).powf(*b as f64))),
+            (ValueType::Int32(a), ValueType::Int32(b)) =>
+                Ok(ValueType::Float64((*a as f64).powf(*b as f64))),
+
+            (ValueType::Int64(a), ValueType::Int32(b)) =>
+                Ok(ValueType::Float64((*a as f64).powf(*b as f64))),
+            (ValueType::Int32(a), ValueType::Int64(b)) =>
+                Ok(ValueType::Float64((*a as f64).powf(*b as f64))),
+
+            (ValueType::Float64(a), ValueType::Int64(b)) =>
+                Ok(ValueType::Float64(a.powf(*b as f64))),
+            (ValueType::Int64(a), ValueType::Float64(b)) =>
+                Ok(ValueType::Float64((*a as f64).powf(*b))),
+
+            (ValueType::Float64(a), ValueType::Int32(b)) =>
+                Ok(ValueType::Float64(a.powf(*b as f64))),
+            (ValueType::Int32(a), ValueType::Float64(b)) =>
+                Ok(ValueType::Float64((*a as f64).powf(*b))),
+
             _ =>
                 Err(
                     format!(
@@ -166,6 +246,6 @@ impl ValueArray {
     }
 
     pub fn read(&self, index: usize) -> ValueType {
-        self.values[index]
+        self.values[index].clone()
     }
 }

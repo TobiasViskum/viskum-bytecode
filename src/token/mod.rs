@@ -38,4 +38,7 @@ impl Token {
     pub fn get_lexeme(&self, source: &str) -> String {
         source[self.start..self.start + self.length].to_string()
     }
+    pub fn get_lexeme_string(&self, source: &str) -> String {
+        source[self.start..self.start + self.length].to_string()
+    }
 }
