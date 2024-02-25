@@ -137,8 +137,6 @@ impl VM {
                     {
                         if !self.had_runtime_error && self.stack.len() > 0 {
                             println!("{:?}", self.stack.pop().unwrap());
-                        } else {
-                            eprintln!("Runtime error")
                         }
                     }
 
@@ -226,6 +224,13 @@ impl VM {
                     self.stack.push(
                         ValueType::String(format!("{}{}", a.to_string(), b.to_string()))
                     );
+                }
+                OpCode::OpPrint => {
+                    let value = self.stack.pop().unwrap();
+                    println!("{}", value.to_string());
+                }
+                OpCode::OpPop => {
+                    self.stack.pop();
                 }
             }
         }

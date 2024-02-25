@@ -66,6 +66,8 @@ impl Chunk {
             OpCode::OpLessEqual => self.simple_instruction("OP_LESS_EQUAL", offset),
             OpCode::OpBangEqual => self.simple_instruction("OP_BANG_EQUAL", offset),
             OpCode::OpInterpolate => self.simple_instruction("OP_INTERPOLATE", offset),
+            OpCode::OpPrint => self.simple_instruction("OP_PRINT", offset),
+            OpCode::OpPop => self.simple_instruction("OP_POP", offset),
         }
     }
 }

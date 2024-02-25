@@ -80,6 +80,29 @@ impl Add for ValueType {
             (ValueType::Float64(a), ValueType::Int32(b)) => Ok(ValueType::Float64(a + (*b as f64))),
             (ValueType::Int32(a), ValueType::Float64(b)) => Ok(ValueType::Float64((*a as f64) + b)),
 
+            (ValueType::String(a), ValueType::String(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+
+            (ValueType::String(a), ValueType::Int64(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+            (ValueType::String(a), ValueType::Int32(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+            (ValueType::String(a), ValueType::Float64(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+            (ValueType::String(a), ValueType::Bool(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+            (ValueType::String(a), ValueType::Null) => Ok(ValueType::String(format!("{}null", a))),
+
+            (ValueType::Int64(a), ValueType::String(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+            (ValueType::Int32(a), ValueType::String(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+            (ValueType::Float64(a), ValueType::String(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+            (ValueType::Bool(a), ValueType::String(b)) =>
+                Ok(ValueType::String(format!("{}{}", a, b))),
+            (ValueType::Null, ValueType::String(b)) => Ok(ValueType::String(format!("null{}", b))),
+
             _ =>
                 Err(
                     format!(

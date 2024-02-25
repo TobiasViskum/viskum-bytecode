@@ -27,6 +27,14 @@ impl<'a> Parser<'a> {
         self.had_error
     }
 
+    pub fn get_panic_mode(&self) -> bool {
+        self.panic_mode
+    }
+
+    pub fn set_panic_mode(&mut self, mode: bool) {
+        self.panic_mode = mode;
+    }
+
     pub fn advance(&mut self) {
         self.previous = self.current.take();
 
@@ -57,6 +65,7 @@ impl<'a> Parser<'a> {
             return;
         }
         let token = &self.current;
+
         self.had_error = true;
 
         self.panic_mode = true;

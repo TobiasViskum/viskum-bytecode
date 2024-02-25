@@ -1,4 +1,4 @@
-pub const OPCODES: [&str; 20] = [
+pub const OPCODES: [&str; 22] = [
     "OpReturn               = 0  | simple_instruction",
     "OpConstant             = 1  | constant_instruction",
     "OpConstantLong         = 2  | constant_long_instruction",
@@ -19,6 +19,8 @@ pub const OPCODES: [&str; 20] = [
     "OpLessEqual            = 17 | simple_instruction",
     "OpBangEqual            = 18 | simple_instruction",
     "OpInterpolate          = 19 | simple_instruction",
+    "OpPrint                = 20 | simple_instruction",
+    "OpPop                  = 21 | simple_instruction",
 ];
 
 pub const TOKENTYPES: [&str; 45] = [
@@ -97,7 +99,7 @@ pub const PARSE_RULES: [&str; 44] = [
     "LessEqual              = { None,        binary, PrecComparison }",
 
     "StringStart            = { string,      None,   PrecNone       }",
-    "StringEnd              = { None,        None,   PrecNone       }",
+    "StringEnd              = { empty,       None,   PrecNone       }",
     "InterpolationStart     = { interpolate, None,   PrecNone       }",
     "InterpolationEnd       = { None,        None,   PrecNone       }",
 

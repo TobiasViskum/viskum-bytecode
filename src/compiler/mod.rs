@@ -1,4 +1,5 @@
 mod helper_methods;
+mod core_methods;
 
 use crate::{ token::token_type::TokenType, chunk::Chunk, parser::Parser };
 
@@ -16,7 +17,9 @@ impl<'a> Compiler<'a> {
     }
 
     pub fn compile(&mut self) -> bool {
-        self.expression();
+        while !self.is_match(&TokenType::TokenEof) {
+            self.declaration();
+        }
 
         self.parser.consume(TokenType::TokenEof, "Expected end of expression");
         self.end_compiler();
@@ -24,18 +27,12 @@ impl<'a> Compiler<'a> {
         self.parser.get_had_error()
     }
 
-    pub fn emit_byte(&mut self, byte: u8) {
-        let previous = self.parser.get_previous();
-        if previous.is_some() {
-            let line = previous.as_ref().unwrap().get_line();
+    pub fn end_compiler(&mut self) {
+        self.emit_return();
 
-            self.write_chunk(byte, line);
-        } else {
-            self.parser.report_error(&"Failed to emit byte".to_string());
+        #[cfg(any(feature = "debug_trace_execution", feature = "debug_print_code"))]
+        if !self.parser.get_had_error() {
+            self.compiling_chunk.disassemble("code");
         }
-    }
-
-    fn write_chunk(&mut self, byte: u8, line: usize) {
-        self.compiling_chunk.write_byte(byte, line);
     }
 }

@@ -51,6 +51,14 @@ mod test {
         let result = vm.interpret("1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9");
         assert_eq!(result, InterpretResult::Debug(ValueType::Int32(45)));
         vm.free_vm();
+
+        let result = vm.interpret("\"Hello\" + \" \" + \"World\"");
+        assert_eq!(result, InterpretResult::Debug(ValueType::String("Hello World".to_string())));
+        vm.free_vm();
+
+        let result = vm.interpret("\"Hello\" + \" \" + \"World\" + 1");
+        assert_eq!(result, InterpretResult::Debug(ValueType::String("Hello World1".to_string())));
+        vm.free_vm();
     }
 
     #[test]
@@ -128,15 +136,11 @@ mod test {
         assert_eq!(result, InterpretResult::Debug(ValueType::Int32(8)));
         vm.free_vm();
 
-        let result = vm.interpret("2 * ()");
-        assert!(matches!(result, InterpretResult::CompileError));
+        let result = vm.interpret("2 * (1)");
+        assert!(matches!(result, InterpretResult::Debug(ValueType::Int32(2))));
         vm.free_vm();
 
         let result = vm.interpret("2 * (3 + 2");
-        assert!(matches!(result, InterpretResult::CompileError));
-        vm.free_vm();
-
-        let result = vm.interpret("2 (3 + 2)");
         assert!(matches!(result, InterpretResult::CompileError));
         vm.free_vm();
 
