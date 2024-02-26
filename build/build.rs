@@ -9,7 +9,7 @@ use std::io;
 
 fn main() -> io::Result<()> {
     generate_opcode::generate_opcode(&OPCODES)?;
-    generate_token_types::generate_token_types(&TOKENTYPES)?;
+    // generate_token_types::generate_token_types(&TOKENTYPES)?;
     generate_rules_store::generate_rules_store(&PARSE_RULES)?;
 
     Ok(())

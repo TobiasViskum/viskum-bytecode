@@ -11,36 +11,38 @@ use TokenType::*;
 
 impl<'a> Compiler<'a> {
     pub fn declaration(&mut self) {
-        let current_ttype = self.get_current();
+        // let current_ttype = self.get_current();
 
-        match current_ttype.get_token_type() {
-            // TokenTypeFloat32 => {
-            //     self.parser.advance();
+        // match current_ttype.get_token_type() {
+        //     // TokenTypeFloat32 => {
+        //     //     self.parser.advance();
 
-            //     let identifier_lexeme = self.get_current().get_lexeme(self.source).clone();
-            // }
-            TokenIdentifier => {
-                let identifier_lexeme = current_ttype.get_lexeme(self.source).clone();
+        //     //     let identifier_lexeme = self.get_current().get_lexeme(self.source).clone();
+        //     // }
+        //     TokenIdentifier => {
+        //         let identifier_lexeme = current_ttype.get_lexeme(self.source).clone();
 
-                self.parser.advance();
+        //         self.parser.advance();
 
-                let new_current_ttype = self.get_current().get_token_type();
-                if new_current_ttype == &TokenDeclaration {
-                    self.variable_declaration(identifier_lexeme, ValueType::Dynamic);
-                } else if new_current_ttype == &TokenEqual {
-                    self.statement();
-                }
-            }
-            _ => self.statement(),
-        }
+        //         let new_current_ttype = self.get_current().get_token_type();
+        //         if new_current_ttype == &TokenDeclaration {
+        //             self.variable_declaration(identifier_lexeme, ValueType::Dynamic);
+        //         } else if new_current_ttype == &TokenEqual {
+        //             self.named_variable(identifier_lexeme);
+        //         }
+        //     }
+        //     _ => self.statement(),
+        // }
+
+        self.statement();
 
         if self.parser.get_panic_mode() {
             self.synchronize()
         }
     }
 
-    fn variable_declaration(&mut self, lexeme: String, value_type: ValueType) {
-        let declaration_index = self.parse_declaration_name(lexeme, value_type);
+    fn variable_declaration(&mut self, lexeme: String, value_type: ValueType, is_mutable: bool) {
+        let declaration_index = self.parse_declaration_name(lexeme, value_type, is_mutable);
 
         if self.is_match(&TokenDeclaration) {
             self.expression();
@@ -77,14 +79,61 @@ impl<'a> Compiler<'a> {
         self.parse_precedence(PrecAssignment)
     }
 
-    fn named_variable(&mut self, lexeme: String) {
-        let variable_index = self.identifier_constant(lexeme, ValueType::Empty);
-        self.emit_bytes(OpCode::OpGetGlobal.into(), variable_index)
+    fn named_variable(&mut self, lexeme: String, value_type: ValueType, is_mutable: bool) {
+        if self.get_can_declare() && self.get_current().get_token_type() == &TokenDeclaration {
+            self.variable_declaration(lexeme, value_type, is_mutable)
+        } else if self.get_can_declare() && self.is_match(&TokenEqual) {
+            if !(value_type == ValueType::Dynamic || value_type == ValueType::Empty) {
+                self.parser.report_error_at_saved_token(
+                    &format!("Unexpected type before variable {} is reassigned: ", lexeme)
+                );
+            } else {
+                let variable_index = self.identifier_lookup_constant(lexeme);
+                self.expression();
+                self.emit_bytes(OpCode::OpSetGlobal.into(), variable_index)
+            }
+        } else {
+            let variable_index = self.identifier_lookup_constant(lexeme);
+            self.emit_bytes(OpCode::OpGetGlobal.into(), variable_index)
+        }
+    }
+
+    pub fn type_keyword(&mut self) {
+        let mut is_mutable = false;
+        let double_previous_ttype = self.get_double_previous_type();
+        if let Some(double_previous_ttype) = double_previous_ttype {
+            if double_previous_ttype == &TokenMutable {
+                is_mutable = true;
+            }
+        }
+
+        self.set_saved_token(self.get_previous().clone());
+
+        let parsed_type = self.get_previous().get_token_type().parse_to_type();
+
+        match self.get_current().get_token_type() {
+            TokenIdentifier => {
+                self.parser.advance();
+                let lexeme = self.get_previous().get_lexeme(self.source);
+                self.named_variable(lexeme, parsed_type, is_mutable)
+            }
+            _ => {
+                self.parser.report_error(&"Expected identifier after type keyword".to_string());
+            }
+        }
     }
 
     pub fn variable(&mut self) {
+        let mut is_mutable = false;
+        let double_previous_ttype = self.get_double_previous_type();
+        if let Some(double_previous_ttype) = double_previous_ttype {
+            if double_previous_ttype == &TokenMutable {
+                is_mutable = true;
+            }
+        }
+
         let lexeme = self.get_previous().get_lexeme(self.source);
-        self.named_variable(lexeme)
+        self.named_variable(lexeme, ValueType::Dynamic, is_mutable)
     }
 
     pub fn interpolate(&mut self) {
@@ -209,6 +258,8 @@ impl<'a> Compiler<'a> {
         let prefix_rule = parse_rule.get_prefix();
 
         if let Some(prefix_rule) = prefix_rule {
+            let can_declare = precedence <= PrecAssignment;
+            self.set_can_declare(can_declare);
             prefix_rule(self);
 
             loop {
@@ -225,6 +276,10 @@ impl<'a> Compiler<'a> {
                 if let Some(infix_rule) = infix_rule {
                     infix_rule(self);
                 }
+
+                if can_declare && (self.is_match(&TokenDeclaration) || self.is_match(&TokenEqual)) {
+                    self.parser.report_error(&format!("Invalid assignment target"));
+                }
             }
         } else {
             println!("No prefix rule found for {:?}", self.get_previous().get_token_type());
@@ -234,6 +289,10 @@ impl<'a> Compiler<'a> {
 
     fn get_rule(&self, token_type: &TokenType) -> &ParseRule {
         PARSE_RULES.get(token_type).unwrap()
+    }
+
+    pub fn parse_next(&mut self) {
+        self.parse_precedence(PrecAssignment)
     }
 
     pub fn empty(&mut self) {}

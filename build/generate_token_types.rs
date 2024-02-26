@@ -29,6 +29,8 @@ pub fn generate_token_types(tokentypes: &[&str]) -> io::Result<()> {
     }
     writeln!(file, "        }}")?;
     writeln!(file, "    }}")?;
+    writeln!(file, "")?;
+    // writeln!(file, "    pub fn parse_to_type(&")
     writeln!(file, "}}")?;
 
     Ok(())

@@ -2,7 +2,7 @@ use self::token_type::TokenType;
 
 pub mod token_type;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     token_type: TokenType,
     start: usize,

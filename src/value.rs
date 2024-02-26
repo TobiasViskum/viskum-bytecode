@@ -15,12 +15,14 @@ pub enum ValueType {
 #[derive(Debug, PartialEq, Clone, PartialOrd)]
 pub struct Variable {
     name: String,
+    value: Value,
     value_type: ValueType,
+    mutable: bool,
 }
 
 impl Variable {
-    pub fn new(name: String, value_type: ValueType) -> Self {
-        Self { name, value_type }
+    pub fn new(name: String, value: Value, value_type: ValueType, mutable: bool) -> Self {
+        Self { name, value, value_type, mutable }
     }
 
     pub fn get_name(&self) -> String {
@@ -29,6 +31,48 @@ impl Variable {
 
     pub fn get_value_type(&self) -> ValueType {
         self.value_type.clone()
+    }
+
+    pub fn get_value(&self) -> Value {
+        self.value.clone()
+    }
+
+    pub fn is_mutable(&self) -> bool {
+        self.mutable
+    }
+
+    pub fn set_value(&mut self, value: Value) -> bool {
+        if self.mutable {
+            self.value = value;
+            true
+        } else {
+            false
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, PartialOrd)]
+pub struct VariableDefinition {
+    name: String,
+    value_type: ValueType,
+    mutable: bool,
+}
+
+impl VariableDefinition {
+    pub fn new(name: String, value_type: ValueType, mutable: bool) -> Self {
+        Self { name, value_type, mutable }
+    }
+
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn get_value_type(&self) -> ValueType {
+        self.value_type.clone()
+    }
+
+    pub fn is_mutable(&self) -> bool {
+        self.mutable
     }
 }
 
@@ -49,7 +93,8 @@ pub enum Value {
     String(String),
     Bool(bool),
     Null,
-    Variable(Variable),
+    VariableDefinition(VariableDefinition),
+    VariableLookup(String),
 }
 
 impl Value {
@@ -61,7 +106,8 @@ impl Value {
             Value::Bool(a) => a.to_string(),
             Value::Null => "null".to_string(),
             Value::String(a) => a.to_string(),
-            Value::Variable(a) => a.name.to_string(),
+            Value::VariableLookup(a) => "VariableLookup".to_string(),
+            Value::VariableDefinition(a) => "VariableDefinition".to_string(),
         }
     }
 
@@ -73,12 +119,26 @@ impl Value {
             Value::Bool(_) => "Bool".to_string(),
             Value::Null => "Null".to_string(),
             Value::String(_) => "String".to_string(),
-            Value::Variable(a) => format!("{:?}", a.value_type),
+            Value::VariableLookup(a) => "VariableLookup".to_string(),
+            Value::VariableDefinition(a) => "VariableDefinition".to_string(),
         }
     }
 
     pub fn is_falsey(&self) -> bool {
         matches!(self, Self::Null | Self::Bool(false))
+    }
+
+    pub fn to_value_type(&self) -> ValueType {
+        match self {
+            Value::Float64(_) => ValueType::Float64,
+            Value::Int64(_) => ValueType::Int64,
+            Value::Int32(_) => ValueType::Int32,
+            Value::Bool(_) => ValueType::Bool,
+            Value::Null => ValueType::Null,
+            Value::String(_) => ValueType::String,
+            Value::VariableLookup(_) => ValueType::Dynamic,
+            Value::VariableDefinition(_) => ValueType::Dynamic,
+        }
     }
 }
 

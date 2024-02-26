@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use crate::{ lexer::Lexer, token::{ Token, token_type::TokenType } };
 
 #[derive(Debug)]
@@ -7,8 +5,11 @@ pub struct Parser<'a> {
     lexer: Lexer<'a>,
     current: Option<Token>,
     previous: Option<Token>,
+    double_previous_type: Option<TokenType>,
+    saved_token: Option<Token>,
     had_error: bool,
     panic_mode: bool,
+    can_declare: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -16,7 +17,32 @@ impl<'a> Parser<'a> {
         let mut lexer = Lexer::new(source);
         let token = lexer.scan_token();
 
-        Self { lexer, current: Some(token), previous: None, had_error: false, panic_mode: false }
+        Self {
+            lexer,
+            current: Some(token),
+            previous: None,
+            saved_token: None,
+            double_previous_type: None,
+            had_error: false,
+            panic_mode: false,
+            can_declare: true,
+        }
+    }
+
+    pub fn set_saved_token(&mut self, token: Token) {
+        self.saved_token = Some(token);
+    }
+
+    pub fn get_double_previous_type(&self) -> &Option<TokenType> {
+        &self.double_previous_type
+    }
+
+    pub fn set_can_declare(&mut self, can_declare: bool) {
+        self.can_declare = can_declare;
+    }
+
+    pub fn get_can_declare(&self) -> bool {
+        self.can_declare
     }
 
     pub fn get_previous(&self) -> &Option<Token> {
@@ -38,6 +64,10 @@ impl<'a> Parser<'a> {
     }
 
     pub fn advance(&mut self) {
+        if let Some(previous) = &self.previous {
+            self.double_previous_type = Some(previous.get_token_type().clone());
+        }
+
         self.previous = self.current.take();
 
         loop {
@@ -73,10 +103,21 @@ impl<'a> Parser<'a> {
         self.panic_mode = true;
         if let Some(token) = token {
             let line = token.get_line();
-            eprintln!("Print error: {}, at: {}", msg, line)
+            eprintln!("Error: {}, at: line {}", msg, line)
         } else {
-            eprintln!("Print error: {}", msg)
+            eprintln!("Error: {}", msg)
         }
+    }
+
+    pub fn report_error_at_saved_token(&mut self, msg: &String) {
+        if self.panic_mode {
+            return;
+        }
+        self.had_error = true;
+        self.panic_mode = true;
+        let token = self.saved_token.as_ref().unwrap();
+        let line = token.get_line();
+        eprintln!("Error: {}{}, at: line {}", msg, token.get_token_type().as_str(), line)
     }
 
     // self.current = Some(self.lexer.scan_token());

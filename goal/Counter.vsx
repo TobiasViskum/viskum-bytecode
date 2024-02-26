@@ -1,7 +1,7 @@
 pub state<i16> count := state(0)
 
 pub fn Counter() {
-    i8 val
+    mut i8 val := 2
 
     if count == 0 {
         val = 2
@@ -10,6 +10,11 @@ pub fn Counter() {
     }
 
     f32 derived := (sum + count) / 2
+
+    mut i32 count := 2
+    fn increment(mut i32 prev, mut i64 out) {
+        // Do something
+    }
 
 
     return (

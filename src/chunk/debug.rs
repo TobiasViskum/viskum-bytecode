@@ -70,6 +70,7 @@ impl Chunk {
             OpCode::OpPop => self.simple_instruction("OP_POP", offset),
             OpCode::OpDefineGlobal => self.constant_instruction("OP_DEFINE_GLOBAL", offset),
             OpCode::OpGetGlobal => self.constant_instruction("OP_GET_GLOBAL", offset),
+            OpCode::OpSetGlobal => self.constant_instruction("OP_SET_GLOBAL", offset),
         }
     }
 }

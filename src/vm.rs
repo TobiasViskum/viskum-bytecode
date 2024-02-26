@@ -1,8 +1,9 @@
 use crate::chunk::Chunk;
 use crate::compiler::Compiler;
 use crate::opcodes::OpCode;
-use crate::value::{ Pow, Value, ValueType };
+use crate::value::{ Pow, Value, ValueType, Variable };
 
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 #[cfg(feature = "debug_trace_execution")]
 use std::time::{ SystemTime, UNIX_EPOCH };
@@ -21,7 +22,7 @@ pub struct VM {
     ip: usize,
     stack: Vec<Value>,
     had_runtime_error: bool,
-    globals: HashMap<String, Value>,
+    globals: HashMap<String, Variable>,
     // stack_top: Value,
 }
 
@@ -251,28 +252,59 @@ impl VM {
                 OpCode::OpDefineGlobal => {
                     let constant = self.read_constant();
 
-                    if let Value::Variable(variable) = constant {
+                    if let Value::VariableDefinition(variable_definition) = constant {
                         let value = self.stack.pop().unwrap();
 
-                        // match variable.get_value_type() {
-                        //     ValueType
-                        // }
+                        let value_type: ValueType;
+                        if variable_definition.get_value_type() == ValueType::Dynamic {
+                            value_type = value.to_value_type();
+                        } else {
+                            self.runtime_error("Could not determine the type of the variable");
+                            continue;
+                        }
 
-                        self.globals.insert(variable.get_name(), value);
+                        let variable = Variable::new(
+                            variable_definition.get_name(),
+                            value,
+                            value_type,
+                            variable_definition.is_mutable()
+                        );
+
+                        self.globals.insert(variable_definition.get_name(), variable);
                     } else {
                         self.runtime_error("Expected a variable to define");
                     }
                 }
                 OpCode::OpGetGlobal => {
                     let constant = self.read_constant();
-                    if let Value::Variable(variable) = constant {
-                        if let Some(value) = self.globals.get(&variable.get_name()) {
-                            self.stack.push(value.clone());
+                    if let Value::VariableLookup(variable_name) = constant {
+                        if let Some(value) = self.globals.get(&variable_name) {
+                            self.stack.push(value.get_value());
                         } else {
                             self.runtime_error("Undefined variable");
                         }
                     } else {
                         self.runtime_error("Expected a variable to get");
+                    }
+                }
+                OpCode::OpSetGlobal => {
+                    let constant = self.read_constant();
+                    if let Value::VariableLookup(variable_name) = constant {
+                        let value = self.stack.last().unwrap().clone();
+                        if let Entry::Occupied(mut e) = self.globals.entry(variable_name.clone()) {
+                            let result = (*e.get_mut()).set_value(value);
+                            if !result {
+                                self.runtime_error(
+                                    format!("Cannot reassign immutable variable: {}", variable_name).as_str()
+                                );
+                            }
+                        } else {
+                            self.runtime_error(
+                                format!("Undefined variable '{}'", variable_name).as_str()
+                            );
+                        }
+                    } else {
+                        self.runtime_error("Expected a variable to set");
                     }
                 }
             }

@@ -233,6 +233,7 @@ impl<'a> Lexer<'a> {
             }
             // "l" => self.check_keyword(1, 2, "et", TokenLet),
             "n" => self.check_keyword(1, 3, "ull", TokenNull),
+            "m" => self.check_keyword(1, 2, "ut", TokenMutable),
             "o" => self.check_keyword(1, 1, "r", TokenOr),
             "p" => self.check_keyword(1, 4, "rint", TokenPrint),
             "r" => self.check_keyword(1, 5, "eturn", TokenReturn),
